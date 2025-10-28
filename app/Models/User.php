@@ -20,7 +20,9 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
+        'favorite_sports',
     ];
 
     /**
@@ -43,6 +45,22 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'favorite_sports' => 'array',
         ];
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function createdSlots()
+    {
+        return $this->hasMany(Slot::class, 'creator_id');
+    }
+
+    public function slotParticipants()
+    {
+        return $this->hasMany(SlotParticipant::class);
     }
 }
