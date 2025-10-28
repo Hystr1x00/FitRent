@@ -69,23 +69,38 @@
     <!-- Mobile Menu -->
     <div x-show="isOpen" x-transition class="md:hidden bg-white border-t">
         <div class="px-4 pt-2 pb-3 space-y-1">
+            @if(auth()->check())
+                <!-- User Profile Section -->
+                <div class="px-3 py-3 bg-blue-50 rounded-lg mb-3">
+                    <div class="flex items-center">
+                        <div class="h-10 w-10 rounded-full gradient-blue flex items-center justify-center mr-3">
+                            <span class="text-white text-sm font-medium">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900">{{ auth()->user()->name }}</div>
+                            <div class="text-sm text-gray-500">{{ auth()->user()->email }}</div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+            
             <a href="{{ route('home') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Home</a>
             <a href="{{ route('venues.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Lapangan</a>
             <a href="{{ route('slots.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Open Slots</a>
-            @auth
+            @if(auth()->check())
                 <a href="{{ route('dashboard') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Dashboard</a>
                 <a href="{{ route('bookings.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">My Bookings</a>
-            @endauth
+            @endif
             <a href="#" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Tentang</a>
-            @guest
+            @if(!auth()->check())
                 <a href="{{ route('login') }}" class="block px-3 py-3 text-blue-600 hover:bg-blue-50 rounded-lg font-medium">Login</a>
                 <a href="{{ route('register') }}" class="block px-3 py-3 gradient-blue text-white rounded-lg font-medium text-center">Daftar</a>
             @else
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
-                    <button type="submit" class="block w-full text-left px-3 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium">Logout</button>
+                    <button type="submit" class="block w-full text-left px-3 py-3 text-red-600 hover:bg-red-50 rounded-lg font-medium">Logout</button>
                 </form>
-            @endguest
+            @endif
         </div>
     </div>
 </nav>

@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="min-h-screen bg-gray-50">
-        <div class="pt-24 pb-16 px-4">
+        <div class="pt-12 pb-16 px-4">
             <div class="max-w-7xl mx-auto">
                 <div class="mb-8">
                     <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
