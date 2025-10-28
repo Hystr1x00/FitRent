@@ -82,7 +82,7 @@
                                 <h4 class="text-lg font-semibold text-gray-900 mb-4">Book This Venue</h4>
                                 
                                 @auth
-                                    <a href="{{ route('venues.booking', $venue) }}" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-3 rounded-lg hover:from-blue-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-center block font-medium mb-4">
+                                    <a href="{{ route('venues.booking', $venue) }}" class="w-full bg-gradient-to-red from-blue-600 to-blue-500 text-white px-4 py-3 rounded-lg hover:from-blue-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-center block font-medium mb-4">
                                         Book Now
                                     </a>
                                 @else
