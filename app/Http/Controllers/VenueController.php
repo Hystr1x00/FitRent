@@ -24,6 +24,11 @@ class VenueController extends Controller
             $query->where('location', $request->location);
         }
 
+        // Filter by branch (Indoor/Outdoor) via facilities JSON
+        if ($request->filled('branch')) {
+            $query->whereJsonContains('facilities', $request->branch);
+        }
+
         if ($request->filled('max_price')) {
             $query->where('price', '<=', $request->max_price);
         }
