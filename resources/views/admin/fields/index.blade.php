@@ -46,10 +46,10 @@
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
         <div class="flex flex-wrap gap-2">
-            <button class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium flex items-center justify-center gap-2 shadow-md">
+            <a href="{{ route('admin.fields.create') }}" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium flex items-center justify-center gap-2 shadow-md">
                 <i class="fas fa-plus"></i>
                 <span>Tambah Lapangan</span>
-            </button>
+            </a>
             <button class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium flex items-center justify-center gap-2">
                 <i class="fas fa-download"></i>
                 <span class="hidden sm:inline">Ekspor</span>
@@ -65,65 +65,45 @@
         </div>
     </div>
 
-    <!-- Lapangan Cards Grid (static demo) -->
+    <!-- Lapangan Cards Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        @include('admin.fields.partials.card', [
-            'title' => 'Lapangan Futsal A',
-            'sport' => 'Futsal',
-            'status' => 'Aktif',
-            'statusColor' => 'green',
-            'img' => 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=400',
-            'bgFrom' => 'from-green-400',
-            'bgTo' => 'to-green-600',
-            'price' => 'Rp 150.000',
-            'bookings' => '32 kali',
-            'rating' => '4.9',
-            'ratingCount' => '(28)'
-        ])
+        @forelse($courts as $court)
+            @php
+                $statusColor = $court->status === 'active' ? 'green' : ($court->status === 'maintenance' ? 'yellow' : 'gray');
+            @endphp
+            @include('admin.fields.partials.card', [
+                'title' => $court->name,
+                'sport' => $court->sport,
+                'status' => ucfirst($court->status),
+                'statusColor' => $statusColor,
+                'img' => $court->image ? asset('storage/' . $court->image) : 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=400',
+                'bgFrom' => 'from-slate-200',
+                'bgTo' => 'to-slate-300',
+                'price' => 'Rp ' . number_format($court->price_per_session, 0, ',', '.'),
+                'bookings' => $court->venue?->bookings()->count() . ' kali',
+                'rating' => $court->venue?->rating ?? '4.8',
+                'ratingCount' => '',
+                'court' => $court,
+            ])
 
-        @include('admin.fields.partials.card', [
-            'title' => 'Lapangan Basket 1',
-            'sport' => 'Basket',
-            'status' => 'Aktif',
-            'statusColor' => 'green',
-            'img' => 'https://images.unsplash.com/photo-1594623930572-300a3011d9ae?w=400',
-            'bgFrom' => 'from-orange-400',
-            'bgTo' => 'to-orange-600',
-            'price' => 'Rp 100.000',
-            'bookings' => '24 kali',
-            'rating' => '4.7',
-            'ratingCount' => '(19)'
-        ])
+            <!-- Edit moved to its own page -->
 
-        @include('admin.fields.partials.card', [
-            'title' => 'Lapangan Badminton 2',
-            'sport' => 'Badminton',
-            'status' => 'Maintenance',
-            'statusColor' => 'yellow',
-            'img' => 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=400',
-            'bgFrom' => 'from-blue-400',
-            'bgTo' => 'to-blue-600',
-            'price' => 'Rp 80.000',
-            'bookings' => '18 kali',
-            'rating' => '4.8',
-            'ratingCount' => '(15)'
-        ])
+        @empty
+            <div class="col-span-full">
+                <div class="border border-dashed rounded-xl p-10 text-center text-gray-500">
+                    Belum ada lapangan. Klik "Tambah Lapangan" untuk menambahkan.
+                </div>
+            </div>
+        @endforelse
     </div>
 
     <!-- Pagination -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
-        <p class="text-sm text-gray-600">Menampilkan 1-6 dari 12 lapangan</p>
-        <div class="flex gap-2">
-            <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium">1</button>
-            <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition">2</button>
-            <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
+        <p class="text-sm text-gray-600">{{ $courts->total() }} lapangan</p>
+        {{ $courts->links() }}
     </div>
+
+    <!-- Create moved to its own page -->
 @endsection
 
 

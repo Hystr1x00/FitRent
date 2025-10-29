@@ -33,13 +33,16 @@ class VenueController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
-        $venues = $query->where('available', true)->get();
+        $venues = $query->where('available', true)
+            ->withCount('courts')
+            ->get();
 
         return view('venues.index', compact('venues'));
     }
 
     public function show(Venue $venue)
     {
+        $venue->load(['courts.timeslots', 'courts.availableDates']);
         return view('venues.show', compact('venue'));
     }
 }

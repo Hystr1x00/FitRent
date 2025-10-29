@@ -311,7 +311,7 @@
                     @forelse($venues as $venue)
                     <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition group relative cursor-pointer" onclick="window.location='{{ route('venues.booking', $venue) }}'">
                         <div class="relative h-48 overflow-hidden">
-                            <img src="{{ $venue->image }}" alt="{{ $venue->name }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
+                            <img src="{{ $venue->image_url }}" alt="{{ $venue->name }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
                             @if($venue->available)
                             <span class="absolute top-4 right-4 px-3 py-1 bg-green-500 text-white text-sm rounded-full">
                                 Tersedia

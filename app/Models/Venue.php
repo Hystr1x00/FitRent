@@ -38,4 +38,22 @@ class Venue extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    public function courts()
+    {
+        return $this->hasMany(Court::class);
+    }
+
+    // Normalized image URL (supports stored path or absolute URL)
+    public function getImageUrlAttribute(): string
+    {
+        $image = $this->image;
+        if (!$image) {
+            return 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200';
+        }
+        if (str_starts_with($image, 'http://') || str_starts_with($image, 'https://')) {
+            return $image;
+        }
+        return asset('storage/' . ltrim($image, '/'));
+    }
 }

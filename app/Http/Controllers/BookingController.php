@@ -13,7 +13,15 @@ class BookingController extends Controller
 {
     public function create(Venue $venue)
     {
-        return view('bookings.create', compact('venue'));
+        $venue->load(['courts.availableDates']);
+        $availableDates = $venue->courts
+            ->flatMap(fn($c) => $c->availableDates->pluck('date'))
+            ->filter()
+            ->map(fn($d) => \Carbon\Carbon::parse($d)->startOfDay())
+            ->unique(fn($d) => $d->toDateString())
+            ->sort()
+            ->values();
+        return view('bookings.create', compact('venue', 'availableDates'));
     }
 
     public function store(Request $request)

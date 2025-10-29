@@ -56,6 +56,11 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/fields', [AdminFieldController::class, 'index'])->name('fields.index');
+    Route::get('/fields/create', [AdminFieldController::class, 'create'])->name('fields.create');
+    Route::get('/fields/{court}/edit', [AdminFieldController::class, 'edit'])->name('fields.edit');
+    Route::post('/fields', [AdminFieldController::class, 'store'])->name('fields.store');
+    Route::post('/fields/{court}', [AdminFieldController::class, 'update'])->name('fields.update');
+    Route::delete('/fields/{court}', [AdminFieldController::class, 'destroy'])->name('fields.destroy');
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
     Route::post('/bookings/{booking}/confirm-return', [AdminBookingController::class, 'confirmReturn'])->name('bookings.confirmReturn');
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');

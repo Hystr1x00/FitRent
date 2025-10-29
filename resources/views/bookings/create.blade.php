@@ -32,7 +32,7 @@
                 <!-- Venue Header Card -->
                 <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
                     <div class="relative h-48 md:h-64 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900">
-                        <img src="{{ $venue->image ?? 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=1200' }}" 
+                        <img src="{{ $venue->image_url ?? 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=1200' }}" 
                              alt="{{ $venue->name }}" 
                              class="w-full h-full object-cover mix-blend-overlay opacity-50">
                         <div class="absolute inset-0 flex items-center justify-center">
@@ -41,17 +41,28 @@
                     </div>
                     
                     <div class="p-6">
-                        <div class="flex flex-wrap items-center gap-4">
-                            <span class="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                                🎾 {{ $venue->sport }}
-                            </span>
-                            <div class="flex items-center text-gray-600">
+                        <div class="flex flex-wrap items-center gap-3 md:gap-4">
+                            <span class="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">🎾 {{ $venue->sport }}</span>
+                            @php
+                                $labels = ($venue->courts ?? collect())
+                                    ->flatMap(function($c){ return $c->labels ?? []; })
+                                    ->unique()
+                                    ->take(4);
+                                $mapsUrl = optional($venue->courts->first())->maps_url ?? ( 'https://www.google.com/maps/search/?api=1&query=' . urlencode($venue->address ?? $venue->location) );
+                            @endphp
+                            @foreach($labels as $lb)
+                                <span class="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold flex items-center gap-1">
+                                    @if($lb==='Indoor') 🏠 @elseif($lb==='Outdoor') 🌳 @else 🔖 @endif
+                                    {{ $lb }}
+                                </span>
+                            @endforeach
+                            <a href="{{ $mapsUrl }}" target="_blank" class="flex items-center text-gray-600 hover:text-blue-700 transition">
                                 <svg class="w-5 h-5 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 </svg>
-                                <span class="text-sm">{{ $venue->location }}</span>
-                            </div>
+                                <span class="text-sm underline decoration-dotted">{{ $venue->location }}</span>
+                            </a>
                             <div class="flex items-center">
                                 <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
@@ -78,6 +89,52 @@
                     <div class="grid lg:grid-cols-3 gap-6">
                         <!-- Left Column - Booking Form -->
                         <div class="lg:col-span-2 space-y-6">
+
+                            <!-- Court Information (from DB) -->
+                            @php $firstCourt = optional($venue->courts)->first(); @endphp
+                            @if($firstCourt)
+                            <div class="bg-white rounded-2xl shadow-sm p-6">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3v5h6v-5c0-1.657-1.343-3-3-3z"/></svg>
+                                    </div>
+                                    <h2 class="text-xl font-bold text-gray-900">Informasi Lapangan</h2>
+                                </div>
+                                <div class="grid grid-cols-1 gap-6">
+                                    @if($firstCourt->about)
+                                    <div>
+                                        <div class="text-sm font-semibold text-gray-900 mb-1">Tentang</div>
+                                        <p class="text-sm text-gray-700 whitespace-pre-line">{{ $firstCourt->about }}</p>
+                                    </div>
+                                    @endif
+                                    @if($firstCourt->rules)
+                                    <div>
+                                        <div class="text-sm font-semibold text-gray-900 mb-1">Aturan</div>
+                                        <p class="text-sm text-gray-700 whitespace-pre-line">{{ $firstCourt->rules }}</p>
+                                    </div>
+                                    @endif
+                                    @if($firstCourt->facilities)
+                                    <div>
+                                        <div class="text-sm font-semibold text-gray-900 mb-2">Fasilitas</div>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            @foreach($firstCourt->facilities as $f)
+                                            <div class="flex items-center gap-2 text-gray-700 text-sm">
+                                                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                <span>{{ $f }}</span>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    @endif
+                                    @if($firstCourt->refund_policy)
+                                    <div>
+                                        <div class="text-sm font-semibold text-gray-900 mb-1">Kebijakan Refund & Reschedule</div>
+                                        <p class="text-sm text-gray-700 whitespace-pre-line">{{ $firstCourt->refund_policy }}</p>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                            @endif
                             
                             <!-- Booking Type Section -->
                             <div class="bg-white rounded-2xl shadow-sm p-6">
@@ -147,26 +204,28 @@
                                 <!-- Date Selector -->
                                 <div class="mb-6">
                                     <div class="flex items-center gap-2 overflow-x-auto pb-2 date-scroll">
-                                        @for($i = 0; $i < 7; $i++)
-                                            @php
-                                                $date = now()->addDays($i);
-                                                $isToday = $i === 0;
-                                            @endphp
-                                            <label class="flex-shrink-0 cursor-pointer">
-                                                <input type="radio" name="date" value="{{ $date->format('Y-m-d') }}" {{ $isToday ? 'checked' : '' }} class="peer sr-only date-radio" required onchange="updateCourtAvailability()">
-                                                <div class="px-4 py-3 border-2 border-gray-200 peer-checked:border-red-600 peer-checked:bg-red-600 rounded-xl transition-all hover:border-red-300 text-center min-w-[80px]">
-                                                    <div class="text-xs font-semibold text-gray-500 peer-checked:text-white uppercase mb-1">
-                                                        {{ $isToday ? 'Hari Ini' : $date->locale('id')->isoFormat('ddd') }}
+                                        @php $hasDates = isset($availableDates) && count($availableDates) > 0; @endphp
+                                        @if($hasDates)
+                                            @foreach($availableDates as $i => $d)
+                                                @php $date = \Carbon\Carbon::parse($d); $isFirst = $i === 0; @endphp
+                                                <label class="flex-shrink-0 cursor-pointer">
+                                                    <input type="radio" name="date" value="{{ $date->format('Y-m-d') }}" {{ $isFirst ? 'checked' : '' }} class="peer sr-only date-radio" required onchange="updateCourtAvailability()">
+                                                    <div class="px-4 py-3 border-2 border-gray-200 peer-checked:border-red-600 peer-checked:bg-red-600 rounded-xl transition-all hover:border-red-300 text-center min-w-[80px]">
+                                                        <div class="text-xs font-semibold text-gray-500 peer-checked:text-white uppercase mb-1">
+                                                            {{ $date->locale('id')->isoFormat('ddd') }}
+                                                        </div>
+                                                        <div class="text-2xl font-bold text-gray-900 peer-checked:text-white">
+                                                            {{ $date->format('d') }}
+                                                        </div>
+                                                        <div class="text-xs text-gray-500 peer-checked:text-white">
+                                                            {{ $date->locale('id')->isoFormat('MMM') }}
+                                                        </div>
                                                     </div>
-                                                    <div class="text-2xl font-bold text-gray-900 peer-checked:text-white">
-                                                        {{ $date->format('d') }}
-                                                    </div>
-                                                    <div class="text-xs text-gray-500 peer-checked:text-white">
-                                                        {{ $date->locale('id')->isoFormat('MMM') }}
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        @endfor
+                                                </label>
+                                            @endforeach
+                                        @else
+                                            <div class="text-sm text-gray-500">Belum ada tanggal tersedia untuk venue ini.</div>
+                                        @endif
                                         <button type="button" class="flex-shrink-0 px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-blue-300 transition-all min-w-[80px] flex items-center justify-center" onclick="openDatePicker(event)">
                                             <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -235,90 +294,69 @@
 
                                 <!-- Courts List -->
                                 <div class="space-y-4" id="courts-container">
-                                    @php
-                                        $courts = [
-                                            ['id' => 1, 'name' => 'Pink Court 1', 'type' => 'Panoramic Padel Court', 'features' => ['Padel', 'Indoor', 'Padel Turf']],
-                                            ['id' => 2, 'name' => 'Blue Court 2', 'type' => 'Panoramic Padel Court', 'features' => ['Padel', 'Indoor', 'Padel Turf']],
-                                            ['id' => 3, 'name' => 'Blue Court 3', 'type' => 'Panoramic Padel Court', 'features' => ['Padel', 'Indoor', 'Padel Turf']],
-                                            ['id' => 4, 'name' => 'Green Court 4', 'type' => 'Standard Padel Court', 'features' => ['Padel', 'Indoor', 'Padel Turf']],
-                                        ];
-
-                                        $timeSlots = [
-                                            ['time' => '08:00 - 10:00', 'price' => 200000, 'period' => 'morning'],
-                                            ['time' => '10:00 - 12:00', 'price' => 200000, 'period' => 'morning'],
-                                            ['time' => '12:00 - 14:00', 'price' => 250000, 'period' => 'afternoon'],
-                                            ['time' => '14:00 - 16:00', 'price' => 250000, 'period' => 'afternoon'],
-                                            ['time' => '16:00 - 18:00', 'price' => 300000, 'period' => 'afternoon'],
-                                            ['time' => '18:00 - 20:00', 'price' => 350000, 'period' => 'evening'],
-                                            ['time' => '20:00 - 22:00', 'price' => 350000, 'period' => 'evening'],
-                                            ['time' => '22:00 - 23:00', 'price' => 300000, 'period' => 'evening'],
-                                        ];
-                                    @endphp
-
-                                    @foreach($courts as $court)
-                                    <div class="border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-300 transition court-item" data-court-id="{{ $court['id'] }}">
+                                    @php $dbCourts = $venue->courts ?? collect(); @endphp
+                                    @forelse($dbCourts as $court)
+                                    <div class="border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-300 transition court-item" data-court-id="{{ $court->id }}">
                                         <!-- Court Header -->
                                         <div class="bg-gradient-to-r from-blue-900 to-blue-800 p-4 flex items-center gap-4">
                                             <div class="relative w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0">
-                                                <img src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=200" alt="{{ $court['name'] }}" class="w-full h-full object-cover">
-                                                <button type="button" class="absolute bottom-1 right-1 bg-white bg-opacity-90 rounded px-2 py-1 text-xs text-gray-700 hover:bg-opacity-100 transition">
-                                                    Lihat
-                                                </button>
+                                                <img src="{{ $court->image ? asset('storage/'.$court->image) : 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=200' }}" alt="{{ $court->name }}" class="w-full h-full object-cover">
+                                                @if($court->gallery)
+                                                <button type="button" onclick="openCourtGallery({{ $court->id }})" class="absolute bottom-1 right-1 bg-white bg-opacity-90 rounded px-2 py-1 text-xs text-gray-700 hover:bg-opacity-100 transition">Lihat</button>
+                                                @endif
                                             </div>
                                             <div class="flex-1 min-w-0">
-                                                <h3 class="text-lg font-bold text-white mb-1">{{ $court['name'] }} <span class="text-sm font-normal">›</span></h3>
-                                                <p class="text-sm text-blue-200 mb-2">{{ $court['type'] }}</p>
+                                                <h3 class="text-lg font-bold text-white mb-1">{{ $court->name }} <span class="text-sm font-normal">›</span></h3>
+                                                <p class="text-sm text-blue-200 mb-2">{{ $court->sport }}</p>
                                                 <div class="flex flex-wrap gap-2">
-                                                    @foreach($court['features'] as $feature)
-                                                    <span class="text-xs px-2 py-1 bg-white bg-opacity-20 text-white rounded">
-                                                        @if($feature === 'Padel') 🎾 @endif
-                                                        @if($feature === 'Indoor') 🏠 @endif
-                                                        @if($feature === 'Padel Turf') 🌿 @endif
-                                                        {{ $feature }}
-                                                    </span>
-                                                    @endforeach
+                                                    @if($court->labels)
+                                                        @foreach($court->labels as $feature)
+                                                        <span class="text-xs px-2 py-1 bg-white bg-opacity-20 text-white rounded">
+                                                            @if($feature === 'Indoor') 🏠 @elseif($feature === 'Outdoor') 🌳 @endif
+                                                            {{ $feature }}
+                                                        </span>
+                                                        @endforeach
+                                                    @endif
                                                 </div>
                                             </div>
-                                            <button type="button" onclick="toggleCourtSlots({{ $court['id'] }})" class="text-white hover:text-blue-200 transition flex-shrink-0">
-                                                <svg class="w-6 h-6 transform transition-transform court-toggle-{{ $court['id'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <button type="button" onclick="toggleCourtSlots({{ $court->id }})" class="text-white hover:text-blue-200 transition flex-shrink-0">
+                                                <svg class="w-6 h-6 transform transition-transform court-toggle-{{ $court->id }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                                 </svg>
                                             </button>
                                         </div>
 
                                         <!-- Time Slots -->
-                                        <div class="p-4 bg-gray-50 hidden court-slots-{{ $court['id'] }}">
+                                        <div class="p-4 bg-gray-50 hidden court-slots-{{ $court->id }}">
                                             <div class="flex items-center justify-between mb-3">
                                                 <span class="text-sm font-semibold text-gray-700">Pilih Jadwal</span>
-                                                <button type="button" class="text-sm text-red-600 hover:text-red-700 font-medium" onclick="showAllSlots({{ $court['id'] }})">
+                                                <button type="button" class="text-sm text-red-600 hover:text-red-700 font-medium" onclick="showAllSlots({{ $court->id }})">
                                                     Tampilkan Semua ›
                                                 </button>
                                             </div>
                                             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                                @foreach($timeSlots as $index => $slot)
-                                                    @php
-                                                        $isBooked = in_array($index, [2, 5]); // Contoh slot yang sudah booked
-                                                        $isAvailable = !$isBooked;
-                                                    @endphp
-                                                    @if($isAvailable)
-                                                        <label class="cursor-pointer time-slot-item" data-period="{{ $slot['period'] }}">
-                                                            <input type="checkbox" value="{{ $court['id'] }}|{{ $court['name'] }}|{{ $slot['time'] }}|{{ $slot['price'] }}" class="peer sr-only time-slot-checkbox" onchange="toggleTimeSlot(this)">
-                                                            <div class="p-3 border-2 border-gray-300 peer-checked:border-blue-600 peer-checked:bg-blue-50 rounded-lg transition-all hover:border-blue-400 text-center">
-                                                                <div class="text-xs text-gray-500 mb-1">{{ explode(' - ', $slot['time'])[0] }}</div>
-                                                                <div class="text-sm font-bold text-gray-900">{{ $slot['time'] }}</div>
-                                                                <div class="text-xs font-semibold text-blue-600 mt-1">
-                                                                    Rp {{ number_format($slot['price'], 0, ',', '.') }}
-                                                                </div>
-                                                            </div>
-                                                        </label>
-                                                    @else
-                                                        <div class="p-3 border-2 border-gray-100 bg-gray-50 rounded-lg text-center opacity-50 cursor-not-allowed">
-                                                            <div class="text-xs text-gray-400 mb-1">{{ explode(' - ', $slot['time'])[0] }}</div>
-                                                            <div class="text-sm font-bold text-gray-400">{{ $slot['time'] }}</div>
-                                                            <div class="text-xs font-semibold text-red-500 mt-1">Booked</div>
+                                                @php $tsFromDb = $court->timeslots ?? collect(); @endphp
+                                                @forelse($tsFromDb as $ts)
+                                                    @php $isBooked = $ts->status === 'booked'; @endphp
+                                                    @if(!$isBooked)
+                                                    <label class="cursor-pointer time-slot-item" data-period="{{ (int)substr($ts->start_time,0,2) < 12 ? 'morning' : ((int)substr($ts->start_time,0,2) < 18 ? 'afternoon' : 'evening') }}">
+                                                        <input type="checkbox" value="{{ $court->id }}|{{ $court->name }}|{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($ts->end_time)->format('H:i') }}|{{ (int)$ts->price }}" class="peer sr-only time-slot-checkbox" onchange="toggleTimeSlot(this)">
+                                                        <div class="p-3 border-2 border-gray-300 peer-checked:border-blue-600 peer-checked:bg-blue-50 rounded-lg transition-all hover:border-blue-400 text-center">
+                                                            <div class="text-xs text-gray-500 mb-1">{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }}</div>
+                                                            <div class="text-sm font-bold text-gray-900">{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($ts->end_time)->format('H:i') }}</div>
+                                                            <div class="text-xs font-semibold text-blue-600 mt-1">Rp {{ number_format($ts->price, 0, ',', '.') }}</div>
                                                         </div>
+                                                    </label>
+                                                    @else
+                                                    <div class="p-3 border-2 border-gray-100 bg-gray-50 rounded-lg text-center opacity-50 cursor-not-allowed">
+                                                        <div class="text-xs text-gray-400 mb-1">{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }}</div>
+                                                        <div class="text-sm font-bold text-gray-400">{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($ts->end_time)->format('H:i') }}</div>
+                                                        <div class="text-xs font-semibold text-red-500 mt-1">Booked</div>
+                                                    </div>
                                                     @endif
-                                                @endforeach
+                                                @empty
+                                                    <div class="col-span-full text-sm text-gray-500">Belum ada jadwal untuk lapangan ini.</div>
+                                                @endforelse
                                             </div>
                                             
                                             <!-- Jadwal Tersedia Info -->
@@ -327,12 +365,33 @@
                                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                                     </svg>
-                                                    <span><strong>{{ count(array_filter($timeSlots, fn($s, $i) => !in_array($i, [2, 5]), ARRAY_FILTER_USE_BOTH)) }} Jadwal Tersedia</strong> untuk {{ $court['name'] }}</span>
+                                                    <span><strong>{{ ($court->timeslots ? $court->timeslots->where('status','available')->count() : 0) }} Jadwal Tersedia</strong> untuk {{ $court->name }}</span>
                                                 </div>
                                             </div>
                                         </div>
+                                        @if($court->gallery)
+                                        <!-- Court Gallery Modal -->
+                                        <div id="gallery-modal-{{ $court->id }}" class="fixed inset-0 z-50 hidden items-center justify-center">
+                                            <div class="absolute inset-0 bg-black/50" onclick="closeCourtGallery({{ $court->id }})"></div>
+                                            <div class="relative bg-white rounded-xl shadow-2xl max-w-3xl w-full mx-4 overflow-hidden">
+                                                <div class="flex items-center justify-between px-5 py-3 border-b">
+                                                    <h4 class="font-semibold text-gray-900">Galeri - {{ $court->name }}</h4>
+                                                    <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeCourtGallery({{ $court->id }})">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    </button>
+                                                </div>
+                                                <div class="p-5 grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                    @foreach($court->gallery as $g)
+                                                        <img src="{{ asset('storage/'.$g) }}" class="w-full h-36 object-cover rounded" alt="gallery">
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
                                     </div>
-                                    @endforeach
+                                    @empty
+                                        <div class="text-sm text-gray-500">Belum ada lapangan terdaftar.</div>
+                                    @endforelse
                                 </div>
                             </div>
 
@@ -481,6 +540,8 @@
         let selectedSlots = []; // [{courtId, courtName, time, price}]
         const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
         let calendarState = { month: new Date().getMonth(), year: new Date().getFullYear() };
+        // Allowed dates from DB (YYYY-MM-DD)
+        const allowedDates = new Set(@json(($availableDates ?? collect())->map(fn($d)=>\Carbon\Carbon::parse($d)->toDateString())));
 
         // Toggle court slots visibility
         function toggleCourtSlots(courtId) {
@@ -663,14 +724,16 @@
                 btn.type = 'button';
                 btn.className = 'h-9 rounded-md text-sm hover:bg-blue-50 hover:text-blue-600 transition';
                 btn.textContent = day;
+                const iso = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
                 const isPast = date.setHours(0,0,0,0) < today.getTime();
-                if (isPast) { btn.classList.add('text-gray-300','cursor-not-allowed'); btn.disabled = true; }
+                const isAllowed = allowedDates.has(iso);
+                if (isPast || !isAllowed) { btn.classList.add('text-gray-300','cursor-not-allowed'); btn.disabled = true; }
                 btn.addEventListener('click', ()=>selectCalendarDate(date));
                 grid.appendChild(btn);
             }
         }
         function selectCalendarDate(date){
-            const val = date.toISOString().slice(0,10);
+            const val = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
             const hiddenRadio = document.getElementById('datepicker-date-radio');
             hiddenRadio.value = val;
             hiddenRadio.checked = true;
@@ -712,6 +775,16 @@
             });
         }
         function animateShake(el){ if (!el) return; el.classList.add('animate-shake'); setTimeout(()=>el.classList.remove('animate-shake'), 400); }
+
+        // Gallery modal helpers
+        function openCourtGallery(id){
+            const el = document.getElementById('gallery-modal-' + id);
+            if (el){ el.classList.remove('hidden'); el.classList.add('flex'); }
+        }
+        function closeCourtGallery(id){
+            const el = document.getElementById('gallery-modal-' + id);
+            if (el){ el.classList.add('hidden'); el.classList.remove('flex'); }
+        }
 
         // Listeners
         bookingTypeRadios.forEach(radio => { radio.addEventListener('change', updateBookingType); });
