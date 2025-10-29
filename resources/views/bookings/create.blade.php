@@ -437,7 +437,7 @@
                                     </span>
                                 </div>
 
-                                <button type="submit" id="submitBtn" disabled class="w-full py-4 bg-gray-300 text-gray-500 rounded-xl font-bold shadow-lg text-lg cursor-not-allowed transition">
+                                <button type="submit" id="submitBtn" disabled class="w-full py-4 bg-gray-300 text-gray-500 rounded-xl font-bold shadow-lg text-lg cursor-not-allowed transition" data-login-url="{{ route('login') }}">
                                     Pilih Jadwal Terlebih Dahulu
                                 </button>
 
@@ -479,6 +479,7 @@
 
     <script>
         let selectedSlots = []; // [{courtId, courtName, time, price}]
+        const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
         let calendarState = { month: new Date().getMonth(), year: new Date().getFullYear() };
 
         // Toggle court slots visibility
@@ -721,6 +722,14 @@
             updateBookingType();
             toggleCourtSlots(1);
             updateSubmitState();
+            // intercept submit when guest
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e){
+                if (!isAuthenticated) {
+                    e.preventDefault();
+                    window.location = document.getElementById('submitBtn').dataset.loginUrl;
+                }
+            });
         });
     </script>
 

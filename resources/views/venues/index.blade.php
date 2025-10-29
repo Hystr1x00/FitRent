@@ -130,7 +130,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
                             </button>
-                            <input type="hidden" name="sport" id="sport-input-mobile" value="{{ request('sport') }}">
+                            <input type="hidden" id="sport-input-mobile" value="{{ request('sport') }}">
                             <div id="sport-dropdown-mobile" class="hidden absolute top-full left-0 mt-2 w-full bg-white rounded-lg shadow-xl z-50 overflow-hidden">
                                 <div class="py-2 max-h-60 overflow-y-auto">
                                     <a href="#" class="dropdown-item block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition" onclick="selectOptionMobile('sport', '', 'Pilih Aktivitas')">Pilih Aktivitas</a>
@@ -157,7 +157,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
                             </button>
-                            <input type="hidden" name="location" id="location-input-mobile" value="{{ request('location') }}">
+                            <input type="hidden" id="location-input-mobile" value="{{ request('location') }}">
                             <div id="location-dropdown-mobile" class="hidden absolute top-full left-0 mt-2 w-full bg-white rounded-lg shadow-xl z-50 overflow-hidden">
                                 <div class="py-2 max-h-60 overflow-y-auto">
                                     <a href="#" class="dropdown-item block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition" onclick="selectOptionMobile('location', '', 'Pilih Kota')">Pilih Kota</a>
@@ -184,7 +184,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
                             </button>
-                            <input type="hidden" name="branch" id="branch-input-mobile" value="{{ request('branch') }}">
+                            <input type="hidden" id="branch-input-mobile" value="{{ request('branch') }}">
                             <div id="branch-dropdown-mobile" class="hidden absolute top-full left-0 mt-2 w-full bg-white rounded-lg shadow-xl z-50 overflow-hidden">
                                 <div class="py-2">
                                     <a href="#" class="dropdown-item block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition" onclick="selectOptionMobile('branch', '', 'Pilih Cabang Olahraga')">Pilih Cabang Olahraga</a>
@@ -233,6 +233,11 @@
                 document.getElementById(type + '-selected').textContent = label;
                 document.getElementById(type + '-input').value = value;
                 toggleDropdown(type + '-dropdown');
+                // sinkronkan ke input mobile agar label mobile ikut berubah
+                const mobileInput = document.getElementById(type + '-input-mobile');
+                if (mobileInput) mobileInput.value = value;
+                const mobileLabel = document.getElementById(type + '-selected-mobile');
+                if (mobileLabel) mobileLabel.textContent = label;
             }
 
             // Mobile option select
@@ -240,6 +245,9 @@
                 event.preventDefault();
                 document.getElementById(type + '-selected-mobile').textContent = label;
                 document.getElementById(type + '-input-mobile').value = value;
+                // tulis juga ke input utama (yang memiliki name=...)
+                const mainInput = document.getElementById(type + '-input');
+                if (mainInput) mainInput.value = value;
                 toggleDropdown(type + '-dropdown-mobile');
             }
 
@@ -301,7 +309,7 @@
                 <!-- Venues Grid -->
                 <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     @forelse($venues as $venue)
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition group">
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition group relative cursor-pointer" onclick="window.location='{{ route('venues.booking', $venue) }}'">
                         <div class="relative h-48 overflow-hidden">
                             <img src="{{ $venue->image }}" alt="{{ $venue->name }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
                             @if($venue->available)
@@ -333,15 +341,9 @@
                                     <div class="text-2xl font-bold text-blue-600">Rp {{ number_format($venue->price, 0, ',', '.') }}</div>
                                     <div class="text-sm text-gray-500">per jam</div>
                                 </div>
-                                @auth
-                                    <a href="{{ route('venues.booking', $venue) }}" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-700 hover:to-blue-600 transition">
-                                        Book
-                                    </a>
-                                @else
-                                    <a href="{{ route('login') }}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
-                                        Login to Book
-                                    </a>
-                                @endauth
+                                <span class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg select-none">
+                                    Lihat & Book
+                                </span>
                             </div>
                         </div>
                     </div>

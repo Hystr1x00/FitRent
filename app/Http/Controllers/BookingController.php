@@ -100,4 +100,35 @@ class BookingController extends Controller
         $booking->load('slot.venue', 'slot.participants');
         return view('bookings.show', compact('booking'));
     }
+
+    public function submitReturn(Request $request, Booking $booking)
+    {
+        if ($booking->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'return_photo' => 'required|image|max:4096',
+            'return_note' => 'nullable|string|max:500',
+            'returned_at' => 'required|date',
+        ]);
+
+        $path = $request->file('return_photo')->store('returns', 'public');
+
+        // Compute overtime vs scheduled end + 15 minutes
+        $slotEnd = Carbon::parse($booking->slot->date->toDateString() . ' ' . $booking->slot->end_time);
+        $bufferEnd = $slotEnd->copy()->addMinutes(15);
+        $actual = Carbon::parse($request->returned_at);
+        $overtime = $actual->greaterThan($bufferEnd) ? $bufferEnd->diffInMinutes($actual) : 0;
+
+        $booking->update([
+            'return_photo' => $path,
+            'return_note' => $request->return_note,
+            'returned_at' => $actual,
+            'overtime_minutes' => $overtime,
+            'return_status' => 'pending',
+        ]);
+
+        return redirect()->route('bookings.show', $booking)->with('success', 'Pengembalian terkirim. Menunggu konfirmasi admin.');
+    }
 }

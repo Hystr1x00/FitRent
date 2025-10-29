@@ -7,6 +7,11 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VenueController;
 use App\Http\Controllers\SlotController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\Admin\FieldController as AdminFieldController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 
 // Public Routes
 Route::get('/', function () {
@@ -26,6 +31,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 // Venue Routes (Public)
 Route::get('/venues', [VenueController::class, 'index'])->name('venues.index');
 Route::get('/venues/{venue}', [VenueController::class, 'show'])->name('venues.show');
+// Allow viewing booking page without login; actual booking POST remains protected
+Route::get('/venues/{venue}/booking', [BookingController::class, 'create'])->name('venues.booking');
 
 // Slot Routes (Public)
 Route::get('/slots', [SlotController::class, 'index'])->name('slots.index');
@@ -36,11 +43,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Booking
-    Route::get('/venues/{venue}/booking', [BookingController::class, 'create'])->name('venues.booking');
     Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
+    Route::post('/bookings/{booking}/return', [BookingController::class, 'submitReturn'])->name('bookings.return');
     
     // Join Slot
     Route::post('/slots/{slot}/join', [SlotController::class, 'join'])->name('slots.join');
+});
+
+// Admin Routes (protected - wajib login)
+Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/fields', [AdminFieldController::class, 'index'])->name('fields.index');
+    Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+    Route::post('/bookings/{booking}/confirm-return', [AdminBookingController::class, 'confirmReturn'])->name('bookings.confirmReturn');
+    Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+    Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
 });

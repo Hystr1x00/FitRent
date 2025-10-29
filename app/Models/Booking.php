@@ -20,11 +20,19 @@ class Booking extends Model
         'status',
         'payment_status',
         'notes',
+        'return_photo',
+        'return_note',
+        'returned_at',
+        'overtime_minutes',
+        'fine_amount',
+        'return_status',
     ];
 
     protected $casts = [
         'date' => 'date',
         'total_price' => 'decimal:2',
+        'returned_at' => 'datetime',
+        'fine_amount' => 'decimal:2',
     ];
 
     public function user()

@@ -113,6 +113,49 @@
                                     </div>
                                 @endif
                                 
+                                <!-- Return (Pengembalian) -->
+                                <div class="mt-6 pt-6 border-t border-gray-200">
+                                    <h4 class="font-semibold text-gray-900 mb-3">Pengembalian Lapangan</h4>
+                                    @if(!$booking->returned_at)
+                                        <form action="{{ route('bookings.return', $booking) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                                            @csrf
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Foto Kondisi Akhir</label>
+                                                    <input type="file" name="return_photo" accept="image/*" required class="w-full text-sm border border-gray-300 rounded-lg p-2">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Waktu Pengembalian</label>
+                                                    <input type="datetime-local" name="returned_at" required class="w-full text-sm border border-gray-300 rounded-lg p-2">
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                                                <textarea name="return_note" rows="3" class="w-full border border-gray-300 rounded-lg p-3" placeholder="Catatan kondisi, kejadian, dll (opsional)"></textarea>
+                                            </div>
+                                            <button class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Kirim Pengembalian</button>
+                                        </form>
+                                    @else
+                                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <p class="text-sm text-gray-600">Dikembalikan pada</p>
+                                                    <p class="font-medium text-gray-800">{{ $booking->returned_at->format('d M Y H:i') }}</p>
+                                                </div>
+                                                @if($booking->return_photo)
+                                                <a href="{{ Storage::url($booking->return_photo) }}" target="_blank" class="text-primary-600 text-sm">Lihat Foto</a>
+                                                @endif
+                                            </div>
+                                            @if($booking->overtime_minutes)
+                                                <p class="mt-2 text-sm text-red-600">Terlambat {{ $booking->overtime_minutes }} menit (toleransi 15 menit)</p>
+                                            @endif
+                                            @if($booking->return_status)
+                                                <p class="mt-2 text-sm">Status: <span class="font-medium">{{ ucfirst($booking->return_status) }}</span></p>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+
                                 <!-- Actions -->
                                 <div class="flex justify-between items-center pt-6 border-t border-gray-200">
                                     <div>
