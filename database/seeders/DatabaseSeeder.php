@@ -19,11 +19,11 @@ class DatabaseSeeder extends Seeder
             VenueSeeder::class,
         ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'phone' => '08123456789',
-            'password' => bcrypt('password'),
-        ]);
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        //     'phone' => '08123456789',
+        //     'password' => bcrypt('password'),
+        // ]);
     }
 }
