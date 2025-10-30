@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string|null $phone
+ * @property array|null $favorite_sports
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany bookings()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany createdSlots()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany slotParticipants()
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */

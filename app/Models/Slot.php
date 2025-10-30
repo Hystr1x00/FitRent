@@ -12,6 +12,8 @@ class Slot extends Model
     protected $fillable = [
         'venue_id',
         'creator_id',
+        'court_id',
+        'court_name',
         'date',
         'time',
         'max_participants',

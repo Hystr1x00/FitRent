@@ -571,66 +571,115 @@
                 });
                 </script>
 
-                <div class="grid lg:grid-cols-3 gap-6">
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @forelse($slots as $slot)
-                    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition">
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-semibold">{{ $slot->sport }}</span>
-                            <span class="text-green-600 font-semibold">
-                                {{ $slot->max_participants - $slot->current_participants }} slot tersisa
-                            </span>
-                        </div>
-                        
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">{{ $slot->venue->name }}</h3>
-                        
-                        <div class="space-y-3 mb-6">
-                            <div class="flex items-center text-gray-600">
-                                <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                <span>{{ $slot->date->format('d M Y') }}</span>
-                            </div>
-                            <div class="flex items-center text-gray-600">
-                                <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span>{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}</span>
-                            </div>
-                            <div class="flex items-center text-gray-600">
-                                <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                                <span>{{ $slot->current_participants }}/{{ $slot->max_participants }} peserta</span>
-                            </div>
-                        </div>
-
-                        <div class="border-t pt-4 mb-4">
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">Biaya per orang</span>
-                                <div class="text-right">
-                                    <div class="text-2xl font-bold text-blue-600">Rp {{ number_format($slot->venue->price / $slot->max_participants, 0, ',', '.') }}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        @auth
-                            @if($slot->current_participants < $slot->max_participants)
-                                <form action="{{ route('slots.join', $slot) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-700 hover:to-blue-600 transition font-semibold">
-                                        Join Slot
-                                    </button>
-                                </form>
-                            @else
-                                <div class="w-full py-3 bg-red-100 text-red-800 rounded-lg text-center font-semibold">
-                                    Slot Penuh
-                                </div>
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100">
+                        <!-- Image Header -->
+                        <div class="relative h-48 bg-gradient-to-br from-blue-600 to-blue-800">
+                            @if($slot->venue->image)
+                                <img src="{{ asset('storage/' . $slot->venue->image) }}" alt="{{ $slot->venue->name }}" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                             @endif
-                        @else
-                            <a href="{{ route('login') }}" class="w-full py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold text-center block">
-                                Login to Join
-                            </a>
-                        @endauth
+                            <div class="absolute top-4 left-4 right-4 flex items-center justify-between">
+                                <span class="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-blue-600 rounded-full text-sm font-bold shadow-lg">
+                                    🏆 {{ $slot->venue->sport }}
+                                </span>
+                                <span class="px-3 py-1.5 bg-green-500/90 backdrop-blur-sm text-white rounded-full text-sm font-bold shadow-lg">
+                                    {{ $slot->max_participants - $slot->current_participants }} slot
+                                </span>
+                            </div>
+                            <div class="absolute bottom-4 left-4 right-4">
+                                <h3 class="text-2xl font-bold text-white mb-1">{{ $slot->venue->name }}</h3>
+                                @if($slot->court_name)
+                                    <p class="text-white/90 text-sm">📍 {{ $slot->court_name }}</p>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div class="p-6">
+                            <!-- Location -->
+                            <div class="flex items-start text-gray-600 mb-4 pb-4 border-b">
+                                <svg class="w-5 h-5 mr-2 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                </svg>
+                                <span class="text-sm">{{ $slot->venue->location }}</span>
+                            </div>
+                            
+                            <!-- Details -->
+                            <div class="space-y-3 mb-6">
+                                <div class="flex items-center text-gray-700">
+                                    <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span class="font-medium">{{ $slot->date->format('d M Y') }}</span>
+                                </div>
+                                <div class="flex items-center text-gray-700">
+                                    <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="font-medium">{{ $slot->time }}</span>
+                                </div>
+                                <div class="flex items-center text-gray-700">
+                                    <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    <span class="font-medium">{{ $slot->current_participants }}/{{ $slot->max_participants }} peserta</span>
+                                </div>
+                                <div class="flex items-center text-gray-700">
+                                    <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                    <span class="font-medium text-sm">Dibuat oleh: <span class="text-blue-600">{{ $slot->creator->name }}</span></span>
+                                </div>
+                            </div>
+
+                            <!-- Price -->
+                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 mb-4 border border-blue-200">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-blue-600 font-medium mb-1">Biaya per orang</p>
+                                        <p class="text-3xl font-bold text-blue-600">Rp {{ number_format($slot->price_per_person, 0, ',', '.') }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-gray-500">+ Biaya Layanan</p>
+                                        <p class="text-sm font-semibold text-gray-700">Rp 5.000</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Join Button -->
+                            @auth
+                                @if(auth()->id() === $slot->creator_id)
+                                    <div class="w-full py-3 bg-gray-100 text-gray-600 rounded-xl text-center font-semibold text-sm border-2 border-gray-200">
+                                        <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Slot Anda
+                                    </div>
+                                @elseif($slot->current_participants < $slot->max_participants)
+                                    <form action="{{ route('slots.join', $slot) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl hover:from-green-700 hover:to-green-600 transition font-bold text-lg shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                            </svg>
+                                            Join Slot - Rp {{ number_format($slot->price_per_person + 5000, 0, ',', '.') }}
+                                        </button>
+                                    </form>
+                                @else
+                                    <div class="w-full py-3 bg-red-100 text-red-800 rounded-xl text-center font-bold border-2 border-red-200">
+                                        ⛔ Slot Penuh
+                                    </div>
+                                @endif
+                            @else
+                                <a href="{{ route('login') }}" class="w-full py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-bold text-center block shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                                    </svg>
+                                    Login untuk Join
+                                </a>
+                            @endauth
+                        </div>
                     </div>
                     @empty
                     <div class="col-span-3 bg-white rounded-xl shadow-md p-12 text-center">
@@ -644,6 +693,13 @@
                     </div>
                     @endforelse
                 </div>
+
+                <!-- Pagination -->
+                @if($slots->hasPages())
+                    <div class="mt-12">
+                        {{ $slots->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>

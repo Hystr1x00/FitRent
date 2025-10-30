@@ -17,6 +17,8 @@ class Booking extends Model
         'date',
         'time',
         'total_price',
+        'penalty_amount',
+        'penalty_paid_at',
         'status',
         'payment_status',
         'notes',
@@ -31,6 +33,8 @@ class Booking extends Model
     protected $casts = [
         'date' => 'date',
         'total_price' => 'decimal:2',
+        'penalty_amount' => 'decimal:2',
+        'penalty_paid_at' => 'datetime',
         'returned_at' => 'datetime',
         'fine_amount' => 'decimal:2',
     ];

@@ -5,62 +5,218 @@
 
 @section('content')
     <!-- Header Filters -->
-    <div class="bg-white rounded-xl p-4 md:p-6 shadow-md border border-gray-100 mb-6">
+    <form method="GET" action="{{ route('admin.reports.index') }}" class="bg-white rounded-xl p-4 md:p-6 shadow-md border border-gray-100 mb-6">
         <div class="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
             <div class="flex gap-2">
-                <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option>Periode: Bulan Ini</option>
-                    <option>Minggu Ini</option>
-                    <option>3 Bulan</option>
-                    <option>1 Tahun</option>
+                <select name="period" onchange="this.form.submit()" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="week" {{ $period == 'week' ? 'selected' : '' }}>Minggu Ini</option>
+                    <option value="month" {{ $period == 'month' ? 'selected' : '' }}>Bulan Ini</option>
+                    <option value="3months" {{ $period == '3months' ? 'selected' : '' }}>3 Bulan</option>
+                    <option value="year" {{ $period == 'year' ? 'selected' : '' }}>1 Tahun</option>
                 </select>
-                <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option>Semua Cabang Olahraga</option>
-                    <option>Futsal</option>
-                    <option>Basket</option>
-                    <option>Badminton</option>
+                <select name="sport" onchange="this.form.submit()" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Cabang Olahraga</option>
+                    <option value="Futsal" {{ $sport == 'Futsal' ? 'selected' : '' }}>Futsal</option>
+                    <option value="Basket" {{ $sport == 'Basket' ? 'selected' : '' }}>Basket</option>
+                    <option value="Badminton" {{ $sport == 'Badminton' ? 'selected' : '' }}>Badminton</option>
+                    <option value="Padel" {{ $sport == 'Padel' ? 'selected' : '' }}>Padel</option>
                 </select>
-            </div>
-            <div class="flex gap-2">
-                <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Ekspor CSV</button>
-                <button class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Ekspor PDF</button>
             </div>
         </div>
-    </div>
+    </form>
 
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
-        @foreach ([
-            ['label'=>'Total Booking','value'=>'412','icon'=>'fa-calendar-check','color'=>'primary'],
-            ['label'=>'Pendapatan','value'=>'Rp 125,4jt','icon'=>'fa-coins','color'=>'yellow'],
-            ['label'=>'Cancel Rate','value'=>'3.1%','icon'=>'fa-ban','color'=>'red'],
-            ['label'=>'ARPU','value'=>'Rp 152.400','icon'=>'fa-user','color'=>'green'],
-        ] as $kpi)
         <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-600">{{ $kpi['label'] }}</span>
-                <i class="fas {{ $kpi['icon'] }} text-2xl text-{{ $kpi['color'] }}-500"></i>
+                <span class="text-sm font-medium text-gray-600">Total Booking</span>
+                <i class="fas fa-calendar-check text-2xl text-primary-500"></i>
             </div>
-            <p class="text-2xl font-bold text-gray-800">{{ $kpi['value'] }}</p>
+            <p class="text-2xl font-bold text-gray-800">{{ number_format($totalBookings) }}</p>
         </div>
-        @endforeach
+        <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-600">Pendapatan</span>
+                <i class="fas fa-coins text-2xl text-yellow-500"></i>
+            </div>
+            <p class="text-2xl font-bold text-gray-800">
+                @if($totalRevenue >= 1000000)
+                    Rp {{ number_format($totalRevenue / 1000000, 1) }} jt
+                @else
+                    Rp {{ number_format($totalRevenue / 1000, 0) }} rb
+                @endif
+            </p>
+        </div>
+        <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-600">Cancel Rate</span>
+                <i class="fas fa-ban text-2xl text-red-500"></i>
+            </div>
+            <p class="text-2xl font-bold text-gray-800">{{ number_format($cancelRate, 1) }}%</p>
+        </div>
+        <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-600">ARPU</span>
+                <i class="fas fa-user text-2xl text-green-500"></i>
+            </div>
+            <p class="text-2xl font-bold text-gray-800">Rp {{ number_format($arpu, 0, ',', '.') }}</p>
+        </div>
     </div>
 
     <!-- Charts -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
             <h3 class="font-semibold text-gray-900 mb-4">Pendapatan per Hari</h3>
-            <div class="h-64 bg-gradient-to-br from-primary-50 to-white rounded-lg border border-dashed border-primary-200 flex items-center justify-center text-primary-600">
-                <span class="text-sm">Placeholder Bar Chart</span>
+            <div class="h-64 relative">
+                @if(count($revenuePerDay) > 0)
+                    <canvas id="revenueChart"></canvas>
+                @else
+                    <div class="h-full flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <i class="fas fa-chart-bar text-3xl mb-2"></i>
+                            <p class="text-sm">Belum ada data pendapatan</p>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
         <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
             <h3 class="font-semibold text-gray-900 mb-4">Distribusi Olahraga</h3>
-            <div class="h-64 bg-gradient-to-br from-primary-50 to-white rounded-lg border border-dashed border-primary-200 flex items-center justify-center text-primary-600">
-                <span class="text-sm">Placeholder Pie Chart</span>
+            <div class="h-64 relative flex items-center justify-center">
+                @if($sportDistribution->count() > 0)
+                    <canvas id="sportChart"></canvas>
+                @else
+                    <div class="text-center text-gray-500">
+                        <i class="fas fa-chart-pie text-3xl mb-2"></i>
+                        <p class="text-sm">Belum ada data</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Helper function to format currency
+    function formatRupiah(value) {
+        if (value >= 1000000) {
+            return 'Rp ' + (value / 1000000).toFixed(1) + ' jt';
+        } else if (value >= 1000) {
+            return 'Rp ' + (value / 1000).toFixed(0) + ' rb';
+        } else {
+            return 'Rp ' + value.toLocaleString('id-ID');
+        }
+    }
+
+    // Revenue per day chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        const chartData = {!! json_encode($revenuePerDay) !!};
+        console.log('Revenue Chart Data:', chartData); // Debug
+        
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: chartData.map(item => item.date),
+                datasets: [{
+                    label: 'Pendapatan',
+                    data: chartData.map(item => item.revenue),
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Pendapatan: ' + formatRupiah(context.parsed.y);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatRupiah(value);
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Sport distribution chart
+    const sportCtx = document.getElementById('sportChart');
+    if (sportCtx) {
+        const sportData = {!! json_encode($sportDistribution) !!};
+        console.log('Sport Chart Data:', sportData); // Debug
+        
+        const colors = [
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(251, 146, 60, 0.8)',
+            'rgba(236, 72, 153, 0.8)',
+            'rgba(168, 85, 247, 0.8)'
+        ];
+        
+        new Chart(sportCtx, {
+            type: 'doughnut',
+            data: {
+                labels: sportData.map(s => s.sport),
+                datasets: [{
+                    data: sportData.map(s => s.count),
+                    backgroundColor: colors.slice(0, sportData.length),
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value + ' booking (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+@endpush
 
 

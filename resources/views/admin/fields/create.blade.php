@@ -89,6 +89,23 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Utama Venue</label>
                         <input type="file" name="venue_image" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer cursor-pointer border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                         <p class="text-xs text-gray-500 mt-1.5">Format: JPG, PNG. Max 2MB</p>
+                        
+                        <!-- Preview Gambar Venue dari Database -->
+                        <div id="venueMainImagePreview" class="mt-3 hidden">
+                            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-info-circle text-blue-600 text-xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-blue-900 mb-2">Gambar Venue dari Database</p>
+                                        <img id="venueMainImage" src="" alt="Venue Image" class="w-full max-w-md rounded-lg border-2 border-blue-300 shadow-sm">
+                                        <p class="text-xs text-blue-700 mt-2">✓ Gambar ini akan digunakan sebagai gambar venue. Anda bisa upload gambar baru untuk menggantinya.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         @error('venue_image')
                             <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                         @enderror
@@ -331,8 +348,12 @@
             if (!select) return;
             const container = document.getElementById('venueImageContainer');
             const img = document.getElementById('venueImagePreview');
-            function update(){
+            
+            async function update(){
                 const opt = select.options[select.selectedIndex];
+                const venueId = select.value;
+                
+                // Show/hide image in dropdown preview
                 const src = opt?.dataset?.image || '';
                 if (src) {
                     img.src = src;
@@ -341,7 +362,81 @@
                     img.src = '';
                     container.classList.add('hidden');
                 }
+                
+                // Auto-populate venue data (SEMUA field dari venue/court pertama)
+                if (venueId) {
+                    try {
+                        const response = await fetch(`/admin/venues/${venueId}`);
+                        const venue = await response.json();
+                        
+                        // Informasi Venue
+                        document.querySelector('input[name="venue_name"]').value = venue.name || '';
+                        document.querySelector('input[name="sport"]').value = venue.sport || '';
+                        document.querySelector('input[name="location"]').value = venue.location || '';
+                        document.querySelector('input[name="maps_url"]').value = venue.maps_url || '';
+                        
+                        // Deskripsi & Informasi
+                        document.querySelector('textarea[name="about"]').value = venue.description || '';
+                        document.querySelector('textarea[name="rules"]').value = venue.rules || '';
+                        document.querySelector('textarea[name="refund_policy"]').value = venue.refund_policy || '';
+                        
+                        // Fasilitas - check checkboxes
+                        if (venue.facilities && Array.isArray(venue.facilities)) {
+                            document.querySelectorAll('input[name="facilities[]"]').forEach(checkbox => {
+                                checkbox.checked = venue.facilities.includes(checkbox.value);
+                            });
+                        }
+                        
+                        // Keterangan Court (Indoor/Outdoor)
+                        if (venue.labels && Array.isArray(venue.labels)) {
+                            document.querySelectorAll('input[name="labels[]"]').forEach(checkbox => {
+                                checkbox.checked = venue.labels.includes(checkbox.value);
+                            });
+                        }
+                        
+                        // Jam Operasional & Harga
+                        document.querySelector('input[name="open_time"]').value = venue.open_time || '08:00';
+                        document.querySelector('input[name="close_time"]').value = venue.close_time || '22:00';
+                        document.querySelector('select[name="booking_duration_minutes"]').value = venue.booking_duration_minutes || 90;
+                        document.querySelector('input[name="price_per_session"]').value = venue.price_per_session || venue.price || 0;
+                        
+                        // Status
+                        document.querySelector('select[name="status"]').value = venue.status || 'active';
+                        
+                        // Show venue main image preview
+                        const mainImagePreview = document.getElementById('venueMainImagePreview');
+                        const mainImageImg = document.getElementById('venueMainImage');
+                        if (venue.image) {
+                            mainImageImg.src = venue.image;
+                            mainImagePreview.classList.remove('hidden');
+                        } else {
+                            mainImageImg.src = '';
+                            mainImagePreview.classList.add('hidden');
+                        }
+                        
+                        console.log('✅ Semua data venue berhasil dimuat:', venue.name);
+                        console.log('💡 Anda bisa mengubah field apapun untuk membedakan court ini');
+                    } catch (error) {
+                        console.error('Error loading venue data:', error);
+                    }
+                } else {
+                    // Clear all auto-filled fields if no venue selected
+                    document.querySelector('input[name="venue_name"]').value = '';
+                    document.querySelector('input[name="sport"]').value = '';
+                    document.querySelector('input[name="location"]').value = '';
+                    document.querySelector('input[name="maps_url"]').value = '';
+                    document.querySelector('textarea[name="about"]').value = '';
+                    document.querySelector('textarea[name="rules"]').value = '';
+                    document.querySelector('textarea[name="refund_policy"]').value = '';
+                    document.querySelectorAll('input[name="facilities[]"]').forEach(cb => cb.checked = false);
+                    document.querySelectorAll('input[name="labels[]"]').forEach(cb => cb.checked = false);
+                    
+                    // Hide venue main image preview
+                    const mainImagePreview = document.getElementById('venueMainImagePreview');
+                    mainImagePreview.classList.add('hidden');
+                }
             }
+            
             select.addEventListener('change', update);
             update();
         })();

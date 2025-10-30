@@ -16,7 +16,18 @@
         <!-- Sport Badge -->
         <div class="absolute top-3 left-3">
             <span class="px-3 py-1.5 bg-white/95 backdrop-blur-sm text-gray-800 text-xs font-semibold rounded-lg shadow-lg flex items-center gap-1.5">
-                <i class="fas fa-{{ $sport === 'Futsal' ? 'futbol' : ($sport === 'Padel' ? 'table-tennis-paddle-ball' : 'volleyball') }} text-blue-600"></i>
+                @php
+                    $sportIcon = match(strtolower($sport)) {
+                        'futsal' => 'futbol',
+                        'padel' => 'table-tennis-paddle-ball',
+                        'basket', 'basketball' => 'basketball',
+                        'badminton' => 'shuttlecock',
+                        'tenis', 'tennis' => 'baseball',
+                        'voli', 'volleyball' => 'volleyball',
+                        default => 'circle'
+                    };
+                @endphp
+                <i class="fas fa-{{ $sportIcon }} text-blue-600"></i>
                 {{ $sport }}
             </span>
         </div>
@@ -30,21 +41,26 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
                     {{ $title }}
                 </h3>
+                @if(isset($court->venue) && $court->venue)
+                <p class="text-sm text-gray-600 mb-2">
+                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                    {{ $court->venue->name }}
+                </p>
+                @endif
                 <div class="flex items-center gap-2 text-xs text-gray-500">
-                    <span class="inline-flex items-center gap-1">
-                        <i class="fas fa-house text-gray-400"></i>
-                        Indoor
-                    </span>
-                    <span class="text-gray-300">•</span>
-                    <span class="inline-flex items-center gap-1">
-                        <i class="fas fa-leaf text-gray-400"></i>
-                        Rumput Sintetis
-                    </span>
+                    @if(isset($court->labels) && is_array($court->labels))
+                        @foreach($court->labels as $label)
+                            <span class="inline-flex items-center gap-1">
+                                <i class="fas fa-{{ $label === 'Indoor' ? 'house' : 'sun' }} text-gray-400"></i>
+                                {{ $label }}
+                            </span>
+                            @if(!$loop->last)
+                                <span class="text-gray-300">•</span>
+                            @endif
+                        @endforeach
+                    @endif
                 </div>
             </div>
-            <button class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <i class="fas fa-ellipsis-v"></i>
-            </button>
         </div>
         
         <!-- Stats -->

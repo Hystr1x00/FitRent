@@ -42,6 +42,11 @@ class VenueController extends Controller
 
     public function show(Venue $venue)
     {
+        // Only show venue if it's available
+        if (!$venue->available) {
+            abort(404, 'Venue tidak tersedia');
+        }
+        
         $venue->load(['courts.timeslots', 'courts.availableDates']);
         return view('venues.show', compact('venue'));
     }

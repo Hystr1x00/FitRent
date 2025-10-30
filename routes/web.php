@@ -33,6 +33,7 @@ Route::get('/venues', [VenueController::class, 'index'])->name('venues.index');
 Route::get('/venues/{venue}', [VenueController::class, 'show'])->name('venues.show');
 // Allow viewing booking page without login; actual booking POST remains protected
 Route::get('/venues/{venue}/booking', [BookingController::class, 'create'])->name('venues.booking');
+Route::get('/venues/{venue}/booked-slots', [BookingController::class, 'getBookedSlots'])->name('venues.booked-slots');
 
 // Slot Routes (Public)
 Route::get('/slots', [SlotController::class, 'index'])->name('slots.index');
@@ -47,6 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
     Route::post('/bookings/{booking}/return', [BookingController::class, 'submitReturn'])->name('bookings.return');
+    Route::post('/bookings/{booking}/pay-penalty', [BookingController::class, 'payPenalty'])->name('bookings.payPenalty');
     
     // Join Slot
     Route::post('/slots/{slot}/join', [SlotController::class, 'join'])->name('slots.join');
@@ -59,10 +61,12 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/fields/create', [AdminFieldController::class, 'create'])->name('fields.create');
     Route::get('/fields/{court}/edit', [AdminFieldController::class, 'edit'])->name('fields.edit');
     Route::post('/fields', [AdminFieldController::class, 'store'])->name('fields.store');
-    Route::post('/fields/{court}', [AdminFieldController::class, 'update'])->name('fields.update');
+    Route::put('/fields/{court}', [AdminFieldController::class, 'update'])->name('fields.update');
     Route::delete('/fields/{court}', [AdminFieldController::class, 'destroy'])->name('fields.destroy');
+    Route::get('/venues/{venue}', [AdminFieldController::class, 'getVenueData'])->name('venues.data');
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
     Route::post('/bookings/{booking}/confirm-return', [AdminBookingController::class, 'confirmReturn'])->name('bookings.confirmReturn');
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
 });
+

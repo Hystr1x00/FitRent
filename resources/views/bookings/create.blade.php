@@ -80,7 +80,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('bookings.store') }}" method="POST">
+                <form id="bookingForm" action="{{ route('bookings.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="venue_id" value="{{ $venue->id }}">
                     <input type="hidden" name="court_id" id="selected_court_id">
@@ -328,44 +328,48 @@
 
                                         <!-- Time Slots -->
                                         <div class="p-4 bg-gray-50 hidden court-slots-{{ $court->id }}">
-                                            <div class="flex items-center justify-between mb-3">
+                                            <div class="mb-3">
                                                 <span class="text-sm font-semibold text-gray-700">Pilih Jadwal</span>
-                                                <button type="button" class="text-sm text-red-600 hover:text-red-700 font-medium" onclick="showAllSlots({{ $court->id }})">
-                                                    Tampilkan Semua ›
-                                                </button>
                                             </div>
                                             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                                @php $tsFromDb = $court->timeslots ?? collect(); @endphp
+                                                @php 
+                                                    // Sort timeslots by start_time (jam terkecil di kiri)
+                                                    $tsFromDb = ($court->timeslots ?? collect())->sortBy('start_time'); 
+                                                @endphp
                                                 @forelse($tsFromDb as $ts)
-                                                    @php $isBooked = $ts->status === 'booked'; @endphp
-                                                    @if(!$isBooked)
-                                                    <label class="cursor-pointer time-slot-item" data-period="{{ (int)substr($ts->start_time,0,2) < 12 ? 'morning' : ((int)substr($ts->start_time,0,2) < 18 ? 'afternoon' : 'evening') }}">
-                                                        <input type="checkbox" value="{{ $court->id }}|{{ $court->name }}|{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($ts->end_time)->format('H:i') }}|{{ (int)$ts->price }}" class="peer sr-only time-slot-checkbox" onchange="toggleTimeSlot(this)">
-                                                        <div class="p-3 border-2 border-gray-300 peer-checked:border-blue-600 peer-checked:bg-blue-50 rounded-lg transition-all hover:border-blue-400 text-center">
-                                                            <div class="text-xs text-gray-500 mb-1">{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }}</div>
-                                                            <div class="text-sm font-bold text-gray-900">{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($ts->end_time)->format('H:i') }}</div>
-                                                            <div class="text-xs font-semibold text-blue-600 mt-1">Rp {{ number_format($ts->price, 0, ',', '.') }}</div>
+                                                    @php 
+                                                        $startTime = \Carbon\Carbon::parse($ts->start_time);
+                                                        $endTime = \Carbon\Carbon::parse($ts->end_time);
+                                                        $timeSlot = $startTime->format('H:i') . ' - ' . $endTime->format('H:i');
+                                                        $durationMinutes = $startTime->diffInMinutes($endTime);
+                                                    @endphp
+                                                    <div class="time-slot-wrapper" data-court-id="{{ $court->id }}" data-time="{{ $timeSlot }}">
+                                                        <label class="cursor-pointer time-slot-item time-slot-available" data-period="{{ (int)substr($ts->start_time,0,2) < 12 ? 'morning' : ((int)substr($ts->start_time,0,2) < 18 ? 'afternoon' : 'evening') }}">
+                                                            <input type="checkbox" value="{{ $court->id }}|{{ $court->name }}|{{ $timeSlot }}|{{ (int)$ts->price }}" class="peer sr-only time-slot-checkbox" onchange="toggleTimeSlot(this)">
+                                                            <div class="p-3 border-2 border-gray-300 peer-checked:border-blue-600 peer-checked:bg-blue-50 rounded-lg transition-all hover:border-blue-400 text-center">
+                                                                <div class="text-xs text-gray-500 mb-1">{{ $durationMinutes }} menit</div>
+                                                                <div class="text-sm font-bold text-gray-900">{{ $timeSlot }}</div>
+                                                                <div class="text-xs font-semibold text-blue-600 mt-1">Rp {{ number_format($ts->price, 0, ',', '.') }}</div>
+                                                            </div>
+                                                        </label>
+                                                        <div class="time-slot-booked hidden p-3 border-2 border-gray-100 bg-gray-50 rounded-lg text-center opacity-50 cursor-not-allowed">
+                                                            <div class="text-xs text-gray-400 mb-1">{{ $durationMinutes }} menit</div>
+                                                            <div class="text-sm font-bold text-gray-400">{{ $timeSlot }}</div>
+                                                            <div class="text-xs font-semibold text-red-500 mt-1">Booked</div>
                                                         </div>
-                                                    </label>
-                                                    @else
-                                                    <div class="p-3 border-2 border-gray-100 bg-gray-50 rounded-lg text-center opacity-50 cursor-not-allowed">
-                                                        <div class="text-xs text-gray-400 mb-1">{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }}</div>
-                                                        <div class="text-sm font-bold text-gray-400">{{ \Carbon\Carbon::parse($ts->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($ts->end_time)->format('H:i') }}</div>
-                                                        <div class="text-xs font-semibold text-red-500 mt-1">Booked</div>
                                                     </div>
-                                                    @endif
                                                 @empty
                                                     <div class="col-span-full text-sm text-gray-500">Belum ada jadwal untuk lapangan ini.</div>
                                                 @endforelse
                                             </div>
                                             
                                             <!-- Jadwal Tersedia Info -->
-                                            <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                            <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg court-available-info" data-court-id="{{ $court->id }}">
                                                 <div class="flex items-center gap-2 text-sm text-green-800">
                                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                                     </svg>
-                                                    <span><strong>{{ ($court->timeslots ? $court->timeslots->where('status','available')->count() : 0) }} Jadwal Tersedia</strong> untuk {{ $court->name }}</span>
+                                                    <span><strong class="court-available-count">{{ $court->timeslots ? $court->timeslots->count() : 0 }}</strong> Jadwal untuk {{ $court->name }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -536,6 +540,58 @@
         </div>
     </div>
 
+    <!-- Error Modal -->
+    <div id="errorModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeErrorModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
+            <div class="p-6">
+                <!-- Icon -->
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                    <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                
+                <!-- Content -->
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2" id="errorTitle">Oops!</h3>
+                    <p class="text-gray-600" id="errorMessage">Terjadi kesalahan</p>
+                </div>
+                
+                <!-- Button -->
+                <button onclick="closeErrorModal()" class="w-full py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl font-semibold hover:from-red-700 hover:to-red-600 transition-all shadow-lg">
+                    Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
+            <div class="p-6">
+                <!-- Icon -->
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                    <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                
+                <!-- Content -->
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Booking Berhasil!</h3>
+                    <p class="text-gray-600">Booking Anda telah dikonfirmasi dan siap digunakan</p>
+                </div>
+                
+                <!-- Button -->
+                <a href="{{ route('bookings.index') }}" class="block w-full py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-semibold hover:from-green-700 hover:to-green-600 transition-all shadow-lg text-center">
+                    Lihat Riwayat Booking
+                </a>
+            </div>
+        </div>
+    </div>
+
     <script>
         let selectedSlots = []; // [{courtId, courtName, time, price}]
         const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
@@ -549,11 +605,6 @@
             const toggleIcon = document.querySelector(`.court-toggle-${courtId}`);
             slotsDiv.classList.toggle('hidden');
             toggleIcon.classList.toggle('rotate-180');
-        }
-
-        // Show all slots (placeholder)
-        function showAllSlots(courtId) {
-            alert(`Menampilkan semua slot untuk lapangan ${courtId}`);
         }
 
         // Toggle time slot selection (maks 2 lapangan berbeda, slot tak dibatasi)
@@ -594,7 +645,12 @@
                 document.getElementById('timeDisplay').textContent = '-';
                 document.getElementById('priceDisplay').textContent = 'Rp 0';
             } else {
-                const courtText = selectedSlots.map(s => `${s.courtName}`).join(' + ');
+                // Group by court - kalau court sama cukup 1x saja
+                const uniqueCourts = [...new Set(selectedSlots.map(s => s.courtName))];
+                const courtText = uniqueCourts.length === 1 
+                    ? uniqueCourts[0]  // Kalau sama: "Court King"
+                    : uniqueCourts.join(' + ');  // Kalau beda: "Court King + Court Queen"
+                
                 const timeText = selectedSlots.map(s => `${s.time}`).join(' | ');
                 const totalPrice = selectedSlots.reduce((sum, s) => sum + s.price, 0);
                 document.getElementById('courtDisplay').textContent = courtText;
@@ -655,10 +711,47 @@
 
         // Filter time slots by period
         function filterTimeSlots(period) {
-            const timeSlots = document.querySelectorAll('.time-slot-item');
-            timeSlots.forEach(slot => {
-                if (period === 'all' || slot.dataset.period === period) slot.style.display = '';
-                else slot.style.display = 'none';
+            const wrappers = document.querySelectorAll('.time-slot-wrapper');
+            wrappers.forEach(wrapper => {
+                const availableLabel = wrapper.querySelector('.time-slot-available');
+                if (!availableLabel) return;
+                
+                const periodAttr = availableLabel.getAttribute('data-period');
+                if (period === 'all' || periodAttr === period) {
+                    wrapper.style.display = '';
+                } else {
+                    wrapper.style.display = 'none';
+                }
+            });
+            
+            // Update counter untuk setiap court
+            updateAvailableSlotCounters();
+        }
+        
+        // Update counter "X Jadwal untuk Court Y"
+        function updateAvailableSlotCounters() {
+            document.querySelectorAll('.court-item').forEach(courtItem => {
+                const courtId = courtItem.getAttribute('data-court-id');
+                
+                // Hitung slot yang visible (tidak hidden) dan available (tidak booked)
+                const visibleAvailableSlots = courtItem.querySelectorAll('.time-slot-wrapper:not([style*="display: none"]) .time-slot-available:not(.hidden)');
+                const count = visibleAvailableSlots.length;
+                
+                // Update counter
+                const infoBox = courtItem.querySelector('.court-available-info');
+                const counterElement = infoBox?.querySelector('.court-available-count');
+                if (counterElement) {
+                    counterElement.textContent = count;
+                }
+                
+                // Sembunyikan info box jika tidak ada slot tersedia
+                if (infoBox) {
+                    if (count === 0) {
+                        infoBox.style.display = 'none';
+                    } else {
+                        infoBox.style.display = '';
+                    }
+                }
             });
         }
 
@@ -741,9 +834,64 @@
             updateCourtAvailability();
         }
 
-        // Update court availability (placeholder)
-        function updateCourtAvailability() {
-            updateSummaryDisplay();
+        // Update court availability - CHECK PER COURT!
+        async function updateCourtAvailability() {
+            const selectedDate = document.querySelector('input[name="date"]:checked')?.value;
+            const venueId = {{ $venue->id }};
+            
+            if (!selectedDate) {
+                return;
+            }
+            
+            try {
+                // Fetch booked slots for the selected date
+                const response = await fetch(`/venues/${venueId}/booked-slots?date=${selectedDate}`);
+                const data = await response.json();
+                const bookedSlots = data.booked_slots || [];
+                
+                console.log('📅 Booked slots for', selectedDate, ':', bookedSlots);
+                
+                // Update UI for each time slot - CHECK PER COURT + TIME!
+                document.querySelectorAll('.time-slot-wrapper').forEach(wrapper => {
+                    const courtId = wrapper.getAttribute('data-court-id');
+                    const time = wrapper.getAttribute('data-time');
+                    const checkbox = wrapper.querySelector('input[type="checkbox"]');
+                    
+                    // Check if THIS SPECIFIC court + time combo is booked
+                    const isBooked = bookedSlots.some(slot => 
+                        slot.court_id == courtId && slot.time === time
+                    );
+                    
+                    console.log(`Court ${courtId} @ ${time}: ${isBooked ? 'BOOKED' : 'AVAILABLE'}`);
+                    
+                    if (isBooked) {
+                        // Slot is booked - SEMBUNYIKAN wrapper (jangan tampilkan)
+                        wrapper.style.display = 'none';
+                        if (checkbox) {
+                            checkbox.checked = false;
+                            checkbox.disabled = true;
+                        }
+                    } else {
+                        // Slot is available - TAMPILKAN wrapper
+                        wrapper.style.display = '';
+                        if (checkbox) {
+                            checkbox.disabled = false;
+                        }
+                    }
+                });
+                
+                // Clear selected slots since date changed
+                selectedSlots = [];
+                updateSummaryDisplay();
+                updateSubmitState();
+                syncHiddenInputs();
+                
+                // Update counter setelah hide booked slots
+                updateAvailableSlotCounters();
+                
+            } catch (error) {
+                console.error('Error fetching booked slots:', error);
+            }
         }
 
         function updateSubmitState(){
@@ -763,15 +911,16 @@
         function syncHiddenInputs(){
             document.getElementById('selected_court_id').value = selectedSlots[0]?.courtId || '';
             document.getElementById('selected_time_slot').value = selectedSlots[0]?.time || '';
-            const form = document.querySelector('form');
-            form.querySelectorAll('.selection-input').forEach(n => n.remove());
+            const bookingForm = document.querySelector('form#bookingForm');
+            if (!bookingForm) return;
+            bookingForm.querySelectorAll('.selection-input').forEach(n => n.remove());
             selectedSlots.forEach(sel => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = 'selections[]';
                 input.value = `${sel.courtId}|${sel.courtName}|${sel.time}|${sel.price}`;
                 input.className = 'selection-input';
-                form.appendChild(input);
+                bookingForm.appendChild(input);
             });
         }
         function animateShake(el){ if (!el) return; el.classList.add('animate-shake'); setTimeout(()=>el.classList.remove('animate-shake'), 400); }
@@ -786,22 +935,124 @@
             if (el){ el.classList.add('hidden'); el.classList.remove('flex'); }
         }
 
+        // Modal Functions
+        function showErrorModal(title, message) {
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorMessage').textContent = message;
+            const modal = document.getElementById('errorModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function showSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
         // Listeners
         bookingTypeRadios.forEach(radio => { radio.addEventListener('change', updateBookingType); });
         document.addEventListener('change', function(e) { if (e.target.name === 'date') { updateSummaryDisplay(); } });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Page loaded, initializing...');
             updateBookingType();
             toggleCourtSlots(1);
             updateSubmitState();
-            // intercept submit when guest
-            const form = document.querySelector('form');
-            form.addEventListener('submit', function(e){
+            // Load booked slots for default selected date
+            updateCourtAvailability();
+            
+            // Form submit validation - HANYA untuk form booking!
+            const bookingForm = document.querySelector('form#bookingForm'); // Cari form dengan ID
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (!bookingForm) {
+                console.error('❌ Booking form not found!');
+                return;
+            }
+            
+            console.log('✅ Event listener attached to booking form');
+            console.log('📝 Form element:', bookingForm);
+            console.log('🔘 Submit button:', submitBtn);
+            
+            // Add click listener on button for debugging
+            submitBtn.addEventListener('click', function(e) {
+                console.log('=== BUTTON CLICKED ===');
+                console.log('Button type:', submitBtn.type);
+                console.log('Button disabled?', submitBtn.disabled);
+                console.log('Selected slots count:', selectedSlots.length);
+                console.log('Is authenticated:', isAuthenticated);
+            });
+            
+            bookingForm.addEventListener('submit', function(e){
+                console.log('🎯 BOOKING FORM SUBMIT EVENT TRIGGERED');
+                
+                // Check if user is authenticated
                 if (!isAuthenticated) {
                     e.preventDefault();
                     window.location = document.getElementById('submitBtn').dataset.loginUrl;
+                    return;
                 }
+                
+                // Validate: Must select at least one time slot
+                if (selectedSlots.length === 0) {
+                    e.preventDefault();
+                    showErrorModal('Belum Ada Jadwal Dipilih', 'Silakan pilih minimal 1 jadwal terlebih dahulu untuk melanjutkan booking.');
+                    return;
+                }
+                
+                // Validate: Must select date
+                const selectedDate = document.querySelector('input[name="date"]:checked');
+                if (!selectedDate) {
+                    e.preventDefault();
+                    showErrorModal('Belum Pilih Tanggal', 'Silakan pilih tanggal booking terlebih dahulu.');
+                    return;
+                }
+                
+                // Validate: Check max participants for shared booking
+                const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
+                if (bookingType === 'shared') {
+                    const maxParticipants = document.getElementById('max_participants')?.value;
+                    if (!maxParticipants || maxParticipants < 2) {
+                        e.preventDefault();
+                        showErrorModal('Jumlah Peserta Tidak Valid', 'Untuk Open Slot, minimal 2 orang peserta.');
+                        return;
+                    }
+                }
+                
+                // All validations passed - submit directly
+                console.log('✅ All validations passed, submitting form...');
+                
+                // Make sure hidden inputs are synced
+                syncHiddenInputs();
+                
+                // Show loading state
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-3 inline" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...';
+                
+                // Debug: Log form data
+                const formData = new FormData(bookingForm);
+                console.log('📋 Form Data:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`  ${key}:`, value);
+                }
+                
+                // Update button state
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Memproses Booking...';
+                submitBtn.classList.add('opacity-75');
+                
+                // Submit the form
+                console.log('🚀 Submitting form to:', bookingForm.action);
+                bookingForm.submit();
             });
         });
     </script>

@@ -11,8 +11,8 @@
                 <span class="text-sm font-medium opacity-90">Total Lapangan</span>
                 <i class="fas fa-layer-group text-2xl opacity-80"></i>
             </div>
-            <p class="text-3xl font-bold mb-1">12</p>
-            <p class="text-xs opacity-75">8 aktif, 4 maintenance</p>
+            <p class="text-3xl font-bold mb-1">{{ $totalCourts }}</p>
+            <p class="text-xs opacity-75">{{ $activeCourts }} aktif, {{ $maintenanceCourts }} maintenance</p>
         </div>
 
         <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
@@ -20,8 +20,10 @@
                 <span class="text-sm font-medium text-gray-600">Booking Hari Ini</span>
                 <i class="fas fa-calendar-check text-2xl text-green-500"></i>
             </div>
-            <p class="text-3xl font-bold text-gray-800 mb-1">24</p>
-            <p class="text-xs text-green-600">+12% dari kemarin</p>
+            <p class="text-3xl font-bold text-gray-800 mb-1">{{ $bookingsToday }}</p>
+            <p class="text-xs {{ $bookingGrowth >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                {{ $bookingGrowth > 0 ? '+' : '' }}{{ number_format($bookingGrowth, 0) }}% dari kemarin
+            </p>
         </div>
 
         <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
@@ -29,8 +31,14 @@
                 <span class="text-sm font-medium text-gray-600">Pendapatan Bulan Ini</span>
                 <i class="fas fa-money-bill-wave text-2xl text-yellow-500"></i>
             </div>
-            <p class="text-3xl font-bold text-gray-800 mb-1">Rp 45.2jt</p>
-            <p class="text-xs text-yellow-600">Target 70%</p>
+            <p class="text-3xl font-bold text-gray-800 mb-1">
+                @if($revenueThisMonth < 1000000)
+                    Rp {{ number_format($revenueThisMonth / 1000, 0) }}rb
+                @else
+                    Rp {{ number_format($revenueThisMonth / 1000000, 1) }}jt
+                @endif
+            </p>
+            <p class="text-xs text-yellow-600">Bulan {{ now()->locale('id')->translatedFormat('F') }}</p>
         </div>
 
         <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
@@ -38,8 +46,8 @@
                 <span class="text-sm font-medium text-gray-600">Rating Rata-rata</span>
                 <i class="fas fa-star text-2xl text-yellow-400"></i>
             </div>
-            <p class="text-3xl font-bold text-gray-800 mb-1">4.8</p>
-            <p class="text-xs text-gray-500">dari 156 ulasan</p>
+            <p class="text-3xl font-bold text-gray-800 mb-1">{{ number_format($avgRating, 1) }}</p>
+            <p class="text-xs text-gray-500">dari semua lapangan</p>
         </div>
     </div>
 
@@ -50,10 +58,6 @@
                 <i class="fas fa-plus"></i>
                 <span>Tambah Lapangan</span>
             </a>
-            <button class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium flex items-center justify-center gap-2">
-                <i class="fas fa-download"></i>
-                <span class="hidden sm:inline">Ekspor</span>
-            </button>
         </div>
         <div class="flex gap-2">
             <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-700">
@@ -69,12 +73,17 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         @forelse($courts as $court)
             @php
-                $statusColor = $court->status === 'active' ? 'green' : ($court->status === 'maintenance' ? 'yellow' : 'gray');
+                // Use venue status if available, otherwise use court status
+                $venueStatus = $court->venue?->available ?? true;
+                $actualStatus = $venueStatus ? $court->status : 'inactive';
+                
+                $statusColor = $actualStatus === 'active' ? 'green' : ($actualStatus === 'maintenance' ? 'yellow' : 'gray');
+                $statusLabel = $actualStatus === 'active' ? 'Active' : ($actualStatus === 'maintenance' ? 'Maintenance' : 'Inactive');
             @endphp
             @include('admin.fields.partials.card', [
                 'title' => $court->name,
                 'sport' => $court->sport,
-                'status' => ucfirst($court->status),
+                'status' => $statusLabel,
                 'statusColor' => $statusColor,
                 'img' => $court->image ? asset('storage/' . $court->image) : 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=400',
                 'bgFrom' => 'from-slate-200',

@@ -15,7 +15,34 @@ class FieldController extends Controller
     {
         $courts = Court::with('venue')->latest()->paginate(12);
         $venues = Venue::orderBy('name')->get();
-        return view('admin.fields.index', compact('courts', 'venues'));
+        
+        // Statistics
+        $totalCourts = Court::count();
+        $activeCourts = Court::where('status', 'active')->count();
+        $maintenanceCourts = Court::where('status', 'maintenance')->count();
+        
+        $bookingsToday = \App\Models\Booking::whereDate('date', today())->count();
+        $bookingsYesterday = \App\Models\Booking::whereDate('date', today()->subDay())->count();
+        $bookingGrowth = $bookingsYesterday > 0 ? (($bookingsToday - $bookingsYesterday) / $bookingsYesterday * 100) : 0;
+        
+        $revenueThisMonth = \App\Models\Booking::where('payment_status', 'paid')
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('total_price');
+        
+        $avgRating = Court::avg('rating') ?? 0;
+        
+        return view('admin.fields.index', compact(
+            'courts', 
+            'venues',
+            'totalCourts',
+            'activeCourts',
+            'maintenanceCourts',
+            'bookingsToday',
+            'bookingGrowth',
+            'revenueThisMonth',
+            'avgRating'
+        ));
     }
 
     public function create(Request $request)
@@ -261,6 +288,35 @@ class FieldController extends Controller
         }
         $court->delete();
         return redirect()->route('admin.fields.index')->with('success', 'Lapangan berhasil dihapus');
+    }
+
+    public function getVenueData(Venue $venue)
+    {
+        // Get a sample court from this venue to get default values
+        $sampleCourt = $venue->courts()->first();
+        
+        return response()->json([
+            'id' => $venue->id,
+            'name' => $venue->name,
+            'sport' => $venue->sport,
+            'location' => $venue->location,
+            'address' => $venue->address,
+            'description' => $venue->description,
+            'facilities' => $venue->facilities ?? [],
+            'image' => $venue->image ? asset('storage/' . $venue->image) : null,
+            'rating' => $venue->rating,
+            'price' => $venue->price ?? 0,
+            // Get from sample court if exists
+            'maps_url' => $sampleCourt->maps_url ?? '',
+            'rules' => $sampleCourt->rules ?? '',
+            'refund_policy' => $sampleCourt->refund_policy ?? '',
+            'labels' => $sampleCourt->labels ?? [],
+            'open_time' => $sampleCourt->open_time ?? '08:00',
+            'close_time' => $sampleCourt->close_time ?? '22:00',
+            'booking_duration_minutes' => $sampleCourt->booking_duration_minutes ?? 90,
+            'price_per_session' => $sampleCourt->price_per_session ?? $venue->price ?? 0,
+            'status' => $sampleCourt->status ?? 'active',
+        ]);
     }
 
     private function validateData(Request $request, ?int $ignoreId = null): array

@@ -116,11 +116,11 @@
                                 @forelse($bookings->take(3) as $booking)
                                     <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                         @if($booking->slot && $booking->slot->venue)
-                                            <img src="{{ $booking->slot->venue->image ?? 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=400' }}" alt="{{ $booking->slot->venue->name }}" 
+                                            <img src="{{ $booking->slot->venue->image ? asset('storage/' . $booking->slot->venue->image) : 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=400' }}" alt="{{ $booking->slot->venue->name }}" 
                                                  class="w-12 h-12 object-cover rounded-lg mr-3">
                                             <div class="flex-1">
                                                 <h4 class="font-medium text-gray-900">{{ $booking->slot->venue->name }}</h4>
-                                                <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($booking->slot->date)->format('d M Y') }} at {{ \Carbon\Carbon::parse($booking->slot->start_time)->format('H:i') }}</p>
+                                                <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($booking->date)->format('d M Y') }} at {{ $booking->time }}</p>
                                             </div>
                                         @else
                                             <div class="w-12 h-12 bg-gray-200 rounded-lg mr-3 flex items-center justify-center">
@@ -170,11 +170,11 @@
                                 @forelse($createdSlots->take(3) as $slot)
                                     <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                         @if($slot->venue)
-                                            <img src="{{ $slot->venue->image ?? 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=400' }}" alt="{{ $slot->venue->name }}" 
+                                            <img src="{{ $slot->venue->image ? asset('storage/' . $slot->venue->image) : 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=400' }}" alt="{{ $slot->venue->name }}" 
                                                  class="w-12 h-12 object-cover rounded-lg mr-3">
                                             <div class="flex-1">
                                                 <h4 class="font-medium text-gray-900">{{ $slot->venue->name }}</h4>
-                                                <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($slot->date)->format('d M Y') }} at {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}</p>
+                                                <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($slot->date)->format('d M Y') }} at {{ $slot->time }}</p>
                                                 <p class="text-xs text-gray-500">{{ $slot->current_participants }}/{{ $slot->max_participants }} participants</p>
                                             </div>
                                         @else
@@ -185,7 +185,7 @@
                                             </div>
                                             <div class="flex-1">
                                                 <h4 class="font-medium text-gray-900">Slot #{{ $slot->id }}</h4>
-                                                <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($slot->date)->format('d M Y') }} at {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}</p>
+                                                <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($slot->date)->format('d M Y') }} at {{ $slot->time }}</p>
                                                 <p class="text-xs text-gray-500">{{ $slot->current_participants }}/{{ $slot->max_participants }} participants</p>
                                             </div>
                                         @endif
