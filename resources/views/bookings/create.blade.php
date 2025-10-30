@@ -80,6 +80,58 @@
                     </div>
                 </div>
 
+                <!-- Unpaid Penalty Warning -->
+                @if(auth()->check() && $hasUnpaidPenalty)
+                <div class="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-300 rounded-2xl p-6 mb-6 shadow-lg">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-red-900 mb-2">⚠️ Anda Memiliki Denda yang Belum Dibayar</h3>
+                            <p class="text-red-800 mb-4">Maaf, Anda tidak dapat melakukan booking baru sebelum melunasi denda yang ada.</p>
+                            
+                            <div class="bg-white rounded-lg p-4 mb-4">
+                                <h4 class="font-semibold text-gray-900 mb-3">Daftar Denda:</h4>
+                                <div class="space-y-2">
+                                    @foreach($unpaidPenalties as $penalty)
+                                    <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                                        <div>
+                                            <p class="font-medium text-gray-900">Booking #{{ str_pad($penalty->id, 4, '0', STR_PAD_LEFT) }}</p>
+                                            <p class="text-sm text-gray-600">{{ $penalty->slot->venue->name ?? 'Venue' }} • {{ $penalty->date->format('d M Y') }}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xl font-bold text-red-600">Rp {{ number_format($penalty->penalty_amount, 0, ',', '.') }}</p>
+                                            <a href="{{ route('bookings.show', $penalty) }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Bayar Sekarang →</a>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <a href="{{ route('bookings.index') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow-lg">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                    Bayar Denda Sekarang
+                                </a>
+                                <a href="{{ route('venues.index') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                    </svg>
+                                    Kembali ke Lapangan
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <form id="bookingForm" action="{{ route('bookings.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="venue_id" value="{{ $venue->id }}">
@@ -148,8 +200,8 @@
                                 </div>
                                 
                                 <div class="grid sm:grid-cols-2 gap-4">
-                                    <label class="cursor-pointer group">
-                                        <input type="radio" name="booking_type" value="private" checked class="peer sr-only">
+                                    <label for="booking_type_private" class="relative cursor-pointer block">
+                                        <input type="radio" name="booking_type" value="private" checked class="peer absolute opacity-0" id="booking_type_private">
                                         <div class="p-5 border-2 border-gray-200 peer-checked:border-blue-600 peer-checked:bg-blue-50 rounded-xl transition-all hover:border-blue-300">
                                             <div class="flex items-center justify-between mb-3">
                                                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -157,8 +209,8 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                                     </svg>
                                                 </div>
-                                                <div class="w-6 h-6 rounded-full border-2 border-gray-300 peer-checked:border-blue-600 peer-checked:bg-blue-600 flex items-center justify-center transition">
-                                                    <svg class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                                                <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center transition border-gray-300 peer-checked:border-blue-600 peer-checked:bg-blue-600">
+                                                    <svg class="w-5 h-5 text-white transition opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                                     </svg>
                                                 </div>
@@ -168,22 +220,22 @@
                                         </div>
                                     </label>
 
-                                    <label class="cursor-pointer group">
-                                        <input type="radio" name="booking_type" value="shared" class="peer sr-only">
-                                        <div class="p-5 border-2 border-gray-200 peer-checked:border-blue-600 peer-checked:bg-blue-50 rounded-xl transition-all hover:border-blue-300">
+                                    <label for="booking_type_shared" class="relative cursor-pointer block">
+                                        <input type="radio" name="booking_type" value="shared" class="peer absolute opacity-0" id="booking_type_shared">
+                                        <div class="p-5 border-2 border-gray-200 peer-checked:border-green-600 peer-checked:bg-green-50 rounded-xl transition-all hover:border-green-300">
                                             <div class="flex items-center justify-between mb-3">
                                                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                                                     <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                                     </svg>
                                                 </div>
-                                                <div class="w-6 h-6 rounded-full border-2 border-gray-300 peer-checked:border-blue-600 peer-checked:bg-blue-600 flex items-center justify-center transition">
-                                                    <svg class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                                                <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center transition border-gray-300 peer-checked:border-green-600 peer-checked:bg-green-600">
+                                                    <svg class="w-5 h-5 text-white transition opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                                     </svg>
                                                 </div>
                                             </div>
-                                            <div class="font-bold text-gray-900 text-lg mb-1">Buat Open Slot</div>
+                                            <div class="font-bold text-gray-900 text-lg mb-1">Open Slot</div>
                                             <div class="text-sm text-gray-600">Buka slot untuk pemain lain bergabung</div>
                                         </div>
                                     </label>
@@ -327,11 +379,21 @@
                                         </div>
 
                                         <!-- Time Slots -->
-                                        <div class="p-4 bg-gray-50 hidden court-slots-{{ $court->id }}">
-                                            <div class="mb-3">
+                                        <div class="p-4 bg-gray-50 hidden court-slots-{{ $court->id }}" data-court-id="{{ $court->id }}" data-court-available-dates='@json(($court->availableDates ?? collect())->pluck("date")->map(fn($d) => \Carbon\Carbon::parse($d)->format("Y-m-d"))->toArray())'>
+                                            <!-- Court Not Available Message -->
+                                            <div class="court-not-available-{{ $court->id }} hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                                <div class="flex items-center gap-2 text-red-800">
+                                                    <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    <span class="text-sm font-medium">{{ $court->name }} tidak tersedia untuk tanggal yang dipilih</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3 court-slots-header-{{ $court->id }}">
                                                 <span class="text-sm font-semibold text-gray-700">Pilih Jadwal</span>
                                             </div>
-                                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 court-timeslots-grid-{{ $court->id }}">
                                                 @php 
                                                     // Sort timeslots by start_time (jam terkecil di kiri)
                                                     $tsFromDb = ($court->timeslots ?? collect())->sortBy('start_time'); 
@@ -400,7 +462,7 @@
                             </div>
 
                             <!-- Participants (for shared booking) -->
-                            <div class="bg-white rounded-2xl shadow-sm p-6 hidden" id="max_participants_section">
+                            <div class="bg-white rounded-2xl shadow-sm p-6" id="max_participants_section">
                                 <div class="flex items-center gap-3 mb-6">
                                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -500,9 +562,41 @@
                                     </span>
                                 </div>
 
+                                @guest
+                                <!-- Guest User: Show Login Required Button -->
+                                <a href="{{ route('login') }}" class="block w-full py-4 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-xl font-bold shadow-lg text-lg text-center hover:from-gray-500 hover:to-gray-600 transition">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                        </svg>
+                                        Login untuk Booking
+                                    </div>
+                                </a>
+                                <p class="text-xs text-center text-gray-600 mt-3">
+                                    <svg class="w-4 h-4 inline mr-1 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Silakan login untuk melanjutkan booking
+                                </p>
+                                @elseif($hasUnpaidPenalty)
+                                <!-- User Has Unpaid Penalty: Show Blocked Button -->
+                                <div class="w-full py-4 bg-gradient-to-r from-red-100 to-red-200 text-red-800 rounded-xl font-bold shadow-lg text-lg text-center cursor-not-allowed border-2 border-red-300">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                        </svg>
+                                        Booking Diblokir - Ada Denda
+                                    </div>
+                                </div>
+                                <p class="text-xs text-center text-red-600 mt-3 font-semibold">
+                                    ⚠️ Lunasi denda terlebih dahulu untuk melanjutkan
+                                </p>
+                                @else
+                                <!-- Logged In User: Show Normal Submit Button -->
                                 <button type="submit" id="submitBtn" disabled class="w-full py-4 bg-gray-300 text-gray-500 rounded-xl font-bold shadow-lg text-lg cursor-not-allowed transition" data-login-url="{{ route('login') }}">
                                     Pilih Jadwal Terlebih Dahulu
                                 </button>
+                                @endguest
 
                                 <p class="text-xs text-gray-500 text-center mt-4 leading-relaxed">
                                     Dengan melanjutkan, Anda setuju dengan <a href="#" class="text-blue-600 hover:underline">Syarat & Ketentuan</a> kami
@@ -595,6 +689,7 @@
     <script>
         let selectedSlots = []; // [{courtId, courtName, time, price}]
         const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
+        const hasUnpaidPenalty = {{ $hasUnpaidPenalty ? 'true' : 'false' }};
         let calendarState = { month: new Date().getMonth(), year: new Date().getFullYear() };
         // Allowed dates from DB (YYYY-MM-DD)
         const allowedDates = new Set(@json(($availableDates ?? collect())->map(fn($d)=>\Carbon\Carbon::parse($d)->toDateString())));
@@ -612,6 +707,8 @@
             const [courtId, courtName, time, priceStr] = checkbox.value.split('|');
             const price = parseInt(priceStr, 10);
 
+            console.log('🔘 TOGGLE TIMESLOT', { courtId, courtName, time, price, checked: checkbox.checked });
+
             if (checkbox.checked) {
                 // cek jumlah lapangan unik jika menambah pilihan ini
                 const uniqueCourts = new Set(selectedSlots.map(s => s.courtId));
@@ -622,8 +719,11 @@
                     return;
                 }
                 selectedSlots.push({ courtId, courtName, time, price });
+                console.log('✅ ADDED TO SELECTED SLOTS. Total:', selectedSlots.length, selectedSlots);
             } else {
+                const beforeLength = selectedSlots.length;
                 selectedSlots = selectedSlots.filter(s => !(s.courtId === courtId && s.time === time));
+                console.log('❌ REMOVED FROM SELECTED SLOTS. Before:', beforeLength, 'After:', selectedSlots.length);
             }
 
             updateSummaryDisplay();
@@ -668,14 +768,55 @@
 
         function updateBookingType() {
             const selectedType = document.querySelector('input[name="booking_type"]:checked').value;
+            
+            console.log('🔄 UPDATE BOOKING TYPE:', selectedType);
+            
+            // Update checkmark visibility for radio buttons
+            const privateRadio = document.getElementById('booking_type_private');
+            const sharedRadio = document.getElementById('booking_type_shared');
+            const privateCheckmark = privateRadio.nextElementSibling.querySelector('.w-8.h-8');
+            const sharedCheckmark = sharedRadio.nextElementSibling.querySelector('.w-8.h-8');
+            
             if (selectedType === 'shared') {
-                maxParticipantsSection.classList.remove('hidden');
+                // Enable dan highlight untuk Open Slot
+                maxParticipantsSection.classList.remove('opacity-50', 'pointer-events-none');
+                maxParticipantsSection.classList.add('border-2', 'border-green-200', 'bg-green-50');
                 sharedCostInfo.classList.remove('hidden');
                 bookingTypeDisplay.textContent = 'Open Slot';
+                
+                // Update checkmarks
+                if (privateCheckmark) {
+                    privateCheckmark.classList.remove('border-blue-600', 'bg-blue-600');
+                    privateCheckmark.classList.add('border-gray-300');
+                    privateCheckmark.querySelector('svg').classList.add('opacity-0');
+                    privateCheckmark.querySelector('svg').classList.remove('opacity-100');
+                }
+                if (sharedCheckmark) {
+                    sharedCheckmark.classList.remove('border-gray-300');
+                    sharedCheckmark.classList.add('border-green-600', 'bg-green-600');
+                    sharedCheckmark.querySelector('svg').classList.remove('opacity-0');
+                    sharedCheckmark.querySelector('svg').classList.add('opacity-100');
+                }
             } else {
-                maxParticipantsSection.classList.add('hidden');
+                // Visual disabled untuk Sewa Pribadi (tapi input tetap terkirim)
+                maxParticipantsSection.classList.add('opacity-50', 'pointer-events-none');
+                maxParticipantsSection.classList.remove('border-2', 'border-green-200', 'bg-green-50');
                 sharedCostInfo.classList.add('hidden');
                 bookingTypeDisplay.textContent = 'Sewa Pribadi';
+                
+                // Update checkmarks
+                if (privateCheckmark) {
+                    privateCheckmark.classList.remove('border-gray-300');
+                    privateCheckmark.classList.add('border-blue-600', 'bg-blue-600');
+                    privateCheckmark.querySelector('svg').classList.remove('opacity-0');
+                    privateCheckmark.querySelector('svg').classList.add('opacity-100');
+                }
+                if (sharedCheckmark) {
+                    sharedCheckmark.classList.remove('border-green-600', 'bg-green-600');
+                    sharedCheckmark.classList.add('border-gray-300');
+                    sharedCheckmark.querySelector('svg').classList.add('opacity-0');
+                    sharedCheckmark.querySelector('svg').classList.remove('opacity-100');
+                }
             }
             updateCostCalculation();
         }
@@ -895,7 +1036,14 @@
         }
 
         function updateSubmitState(){
+            // If user not authenticated or has unpaid penalty, don't update submit button
+            if (!isAuthenticated || hasUnpaidPenalty) {
+                return;
+            }
+            
             const submitBtn = document.getElementById('submitBtn');
+            if (!submitBtn) return; // Button doesn't exist for guest users or users with penalty
+            
             const enabled = selectedSlots.length > 0;
             submitBtn.disabled = !enabled;
             if (enabled) {
@@ -956,9 +1104,81 @@
             modal.classList.add('flex');
         }
 
+        // Check court availability based on selected date
+        function checkCourtAvailabilityForDate(selectedDate) {
+            if (!selectedDate) {
+                console.log('⚠️ No date selected, skipping availability check');
+                return;
+            }
+            
+            console.log('🔍 Checking court availability for date:', selectedDate);
+            
+            // Get all court slots divs
+            const courtSlotsDivs = document.querySelectorAll('[data-court-available-dates]');
+            console.log(`📋 Found ${courtSlotsDivs.length} courts to check`);
+            
+            courtSlotsDivs.forEach(courtDiv => {
+                const availableDatesStr = courtDiv.getAttribute('data-court-available-dates');
+                const courtId = courtDiv.getAttribute('data-court-id');
+                
+                if (!courtId) {
+                    console.log('⚠️ Court ID not found, skipping');
+                    return;
+                }
+                
+                const availableDates = JSON.parse(availableDatesStr || '[]');
+                console.log(`📅 Court ${courtId} available dates:`, availableDates);
+                
+                const isAvailable = availableDates.includes(selectedDate);
+                
+                console.log(`Court ${courtId}: ${isAvailable ? '✅ Available' : '❌ Not available'} for ${selectedDate}`);
+                console.log(`  → availableDates.includes("${selectedDate}"):`, isAvailable);
+                
+                const notAvailableMsg = document.querySelector(`.court-not-available-${courtId}`);
+                const slotsHeader = document.querySelector(`.court-slots-header-${courtId}`);
+                const slotsGrid = document.querySelector(`.court-timeslots-grid-${courtId}`);
+                const availableInfo = document.querySelector(`.court-available-info[data-court-id="${courtId}"]`);
+                
+                if (!isAvailable) {
+                    console.log(`  → 🚫 Hiding timeslots for Court ${courtId}`);
+                    // Hide timeslots, show not available message
+                    if (notAvailableMsg) notAvailableMsg.classList.remove('hidden');
+                    if (slotsHeader) slotsHeader.classList.add('hidden');
+                    if (slotsGrid) slotsGrid.classList.add('hidden');
+                    if (availableInfo) availableInfo.classList.add('hidden');
+                    
+                    // Uncheck all time slots for this court
+                    const timeSlotCheckboxes = slotsGrid?.querySelectorAll('.time-slot-checkbox');
+                    timeSlotCheckboxes?.forEach(checkbox => {
+                        if (checkbox.checked) {
+                            checkbox.checked = false;
+                            checkbox.dispatchEvent(new Event('change'));
+                        }
+                    });
+                } else {
+                    console.log(`  → ✅ Showing timeslots for Court ${courtId}`);
+                    // Show timeslots, hide not available message
+                    if (notAvailableMsg) notAvailableMsg.classList.add('hidden');
+                    if (slotsHeader) slotsHeader.classList.remove('hidden');
+                    if (slotsGrid) slotsGrid.classList.remove('hidden');
+                    if (availableInfo) availableInfo.classList.remove('hidden');
+                }
+            });
+        }
+        
         // Listeners
         bookingTypeRadios.forEach(radio => { radio.addEventListener('change', updateBookingType); });
-        document.addEventListener('change', function(e) { if (e.target.name === 'date') { updateSummaryDisplay(); } });
+        document.addEventListener('change', function(e) { 
+            if (e.target.name === 'date') { 
+                updateSummaryDisplay();
+                // Check court availability when date changes
+                const selectedDate = e.target.value;
+                if (selectedDate) {
+                    checkCourtAvailabilityForDate(selectedDate);
+                    updateCourtAvailability();
+                }
+            } 
+        });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -966,12 +1186,30 @@
             updateBookingType();
             toggleCourtSlots(1);
             updateSubmitState();
+            
+            // Check court availability for default selected date
+            const defaultDateInput = document.querySelector('input[name="date"]:checked');
+            if (defaultDateInput && defaultDateInput.value) {
+                checkCourtAvailabilityForDate(defaultDateInput.value);
+            }
+            
             // Load booked slots for default selected date
             updateCourtAvailability();
             
             // Form submit validation - HANYA untuk form booking!
             const bookingForm = document.querySelector('form#bookingForm'); // Cari form dengan ID
             const submitBtn = document.getElementById('submitBtn');
+            
+            // If user is not authenticated or has unpaid penalty, no need to setup form handlers
+            if (!isAuthenticated) {
+                console.log('🔒 User not authenticated - booking form disabled');
+                return;
+            }
+            
+            if (hasUnpaidPenalty) {
+                console.log('⚠️ User has unpaid penalty - booking blocked');
+                return;
+            }
             
             if (!bookingForm) {
                 console.error('❌ Booking form not found!');
@@ -983,13 +1221,15 @@
             console.log('🔘 Submit button:', submitBtn);
             
             // Add click listener on button for debugging
-            submitBtn.addEventListener('click', function(e) {
-                console.log('=== BUTTON CLICKED ===');
-                console.log('Button type:', submitBtn.type);
-                console.log('Button disabled?', submitBtn.disabled);
-                console.log('Selected slots count:', selectedSlots.length);
-                console.log('Is authenticated:', isAuthenticated);
-            });
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function(e) {
+                    console.log('=== BUTTON CLICKED ===');
+                    console.log('Button type:', submitBtn.type);
+                    console.log('Button disabled?', submitBtn.disabled);
+                    console.log('Selected slots count:', selectedSlots.length);
+                    console.log('Is authenticated:', isAuthenticated);
+                });
+            }
             
             bookingForm.addEventListener('submit', function(e){
                 console.log('🎯 BOOKING FORM SUBMIT EVENT TRIGGERED');
@@ -1018,8 +1258,14 @@
                 
                 // Validate: Check max participants for shared booking
                 const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
+                console.log('📝 Booking Type:', bookingType);
+                
                 if (bookingType === 'shared') {
-                    const maxParticipants = document.getElementById('max_participants')?.value;
+                    const maxParticipantsInput = document.getElementById('max_participants');
+                    const maxParticipants = maxParticipantsInput?.value;
+                    console.log('👥 Max Participants Input:', maxParticipantsInput);
+                    console.log('👥 Max Participants Value:', maxParticipants);
+                    
                     if (!maxParticipants || maxParticipants < 2) {
                         e.preventDefault();
                         showErrorModal('Jumlah Peserta Tidak Valid', 'Untuk Open Slot, minimal 2 orang peserta.');
@@ -1029,6 +1275,9 @@
                 
                 // All validations passed - submit directly
                 console.log('✅ All validations passed, submitting form...');
+                console.log('📦 Selected Slots:', selectedSlots);
+                console.log('📅 Date:', selectedDate?.value);
+                console.log('🎯 Booking Type:', bookingType);
                 
                 // Make sure hidden inputs are synced
                 syncHiddenInputs();

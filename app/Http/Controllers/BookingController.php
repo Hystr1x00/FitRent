@@ -26,7 +26,23 @@ class BookingController extends Controller
             ->unique(fn($d) => $d->toDateString())
             ->sort()
             ->values();
-        return view('bookings.create', compact('venue', 'availableDates'));
+        
+        // Check if user has unpaid penalties
+        $hasUnpaidPenalty = false;
+        $unpaidPenalties = collect();
+        
+        if (Auth::check()) {
+            $unpaidPenalties = Booking::where('user_id', Auth::id())
+                ->where('return_status', 'approved')
+                ->where('penalty_amount', '>', 0)
+                ->whereNull('penalty_paid_at')
+                ->with('slot.venue')
+                ->get();
+            
+            $hasUnpaidPenalty = $unpaidPenalties->isNotEmpty();
+        }
+        
+        return view('bookings.create', compact('venue', 'availableDates', 'hasUnpaidPenalty', 'unpaidPenalties'));
     }
     
     public function getBookedSlots(Request $request, Venue $venue)
@@ -57,21 +73,51 @@ class BookingController extends Controller
 
     public function store(Request $request)
     {
-        // Validate request
-        $validated = $request->validate([
-            'venue_id' => 'required|exists:venues,id',
-            'booking_type' => 'required|in:private,shared',
-            'date' => 'required|date|after_or_equal:today',
-            'selections' => 'required|array|min:1',
-            'selections.*' => 'required|string',
-            'max_participants' => 'required_if:booking_type,shared|integer|min:2|max:20',
-            'notes' => 'nullable|string|max:500',
+        Log::info('🎯 BOOKING STORE CALLED', [
+            'booking_type' => $request->booking_type,
+            'venue_id' => $request->venue_id,
+            'date' => $request->date,
+            'max_participants' => $request->max_participants,
+            'selections_raw' => $request->selections,
+            'selections_count' => count($request->selections ?? []),
         ]);
+        
+        // Validate request
+        try {
+            $validated = $request->validate([
+                'venue_id' => 'required|exists:venues,id',
+                'booking_type' => 'required|in:private,shared',
+                'date' => 'required|date|after_or_equal:today',
+                'selections' => 'required|array|min:1',
+                'selections.*' => 'required|string',
+                'max_participants' => 'required_if:booking_type,shared|integer|min:2|max:20',
+                'notes' => 'nullable|string|max:500',
+            ]);
+            
+            Log::info('✅ VALIDATION PASSED', ['validated' => $validated]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('❌ VALIDATION FAILED', [
+                'errors' => $e->errors(),
+                'input' => $request->all()
+            ]);
+            throw $e;
+        }
 
         $user = Auth::user();
         
         if (!$user) {
             return redirect()->route('login')->with('error', 'Please login to continue.');
+        }
+        
+        // Check if user has unpaid penalties
+        $hasUnpaidPenalty = Booking::where('user_id', $user->id)
+            ->where('return_status', 'approved')
+            ->where('penalty_amount', '>', 0)
+            ->whereNull('penalty_paid_at')
+            ->exists();
+        
+        if ($hasUnpaidPenalty) {
+            return redirect()->back()->with('error', 'Anda memiliki denda yang belum dibayar. Silakan lunasi terlebih dahulu sebelum melakukan booking baru.');
         }
 
         $venue = Venue::findOrFail($validated['venue_id']);
@@ -90,7 +136,15 @@ class BookingController extends Controller
                 'time' => $parts[2] ?? '',
                 'price' => (int)($parts[3] ?? 0),
             ];
-        });
+        })->unique(function($item) {
+            // Remove duplicates based on court_id + time combination
+            return $item['court_id'] . '|' . $item['time'];
+        })->values();
+        
+        Log::info('📊 AFTER UNIQUE FILTER', [
+            'selections_after_unique' => $selections->toArray(),
+            'count_after_unique' => $selections->count()
+        ]);
         
         $totalPrice = $selections->sum('price');
         $serviceFee = 5000;
@@ -142,6 +196,11 @@ class BookingController extends Controller
             // ============================================
             // OPEN SLOT - Buka untuk pemain lain join
             // ============================================
+            Log::info('🔵 CREATING OPEN SLOT', [
+                'max_participants' => $request->max_participants,
+                'selections_count' => $selections->count()
+            ]);
+            
             foreach ($selections as $sel) {
                 $timeParts = explode(' - ', $sel['time']);
                 $startTime = trim($timeParts[0] ?? '00:00');
@@ -152,6 +211,14 @@ class BookingController extends Controller
                 $pricePerPerson = round($sel['price'] / $maxParticipants);
                 $serviceFee = 5000;
                 $totalPriceWithService = $pricePerPerson + $serviceFee;
+                
+                Log::info('💰 PRICE CALCULATION', [
+                    'base_price' => $sel['price'],
+                    'max_participants' => $maxParticipants,
+                    'price_per_person' => $pricePerPerson,
+                    'service_fee' => $serviceFee,
+                    'total_with_service' => $totalPriceWithService
+                ]);
                 
                 // Create slot - SHARED: multiple participants dapat join
             $slot = Slot::create([
@@ -188,6 +255,14 @@ class BookingController extends Controller
                     'booking_id' => $booking->id,
                     'amount_paid' => $totalPriceWithService,
                     'payment_status' => 'paid',
+                ]);
+                
+                Log::info('✅ OPEN SLOT CREATED', [
+                    'slot_id' => $slot->id,
+                    'booking_id' => $booking->id,
+                    'status' => $slot->status,
+                    'current_participants' => $slot->current_participants,
+                    'max_participants' => $slot->max_participants
                 ]);
                 
                 // CATATAN: Jangan update court_timeslots karena itu adalah template untuk semua tanggal
@@ -275,14 +350,27 @@ class BookingController extends Controller
             abort(403);
         }
         
-        $booking->load('slot.venue', 'slot.participants');
-        return view('bookings.show', compact('booking'));
+        $booking->load('slot.venue', 'slot.participants', 'slot.creator');
+        
+        // Check if current user is the slot creator
+        $isCreator = $booking->slot && $booking->slot->creator_id === Auth::id();
+        
+        return view('bookings.show', compact('booking', 'isCreator'));
     }
 
     public function submitReturn(Request $request, Booking $booking)
     {
+        // Only allow the booking owner to submit return
         if ($booking->user_id !== Auth::id()) {
-            abort(403);
+            abort(403, 'Unauthorized');
+        }
+        
+        // Load slot relationship to check creator
+        $booking->load('slot');
+        
+        // Only slot creator can submit return
+        if (!$booking->slot || $booking->slot->creator_id !== Auth::id()) {
+            return back()->with('error', 'Hanya creator slot yang dapat mengembalikan lapangan.');
         }
 
         $request->validate([

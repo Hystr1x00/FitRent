@@ -81,8 +81,8 @@ class DashboardController extends Controller
         
         switch ($period) {
             case 'daily':
-                // Last 30 days
-                for ($i = 29; $i >= 0; $i--) {
+                // Last 7 days only
+                for ($i = 6; $i >= 0; $i--) {
                     $date = Carbon::now()->subDays($i);
                     $revenue = Booking::where('payment_status', 'paid')
                         ->whereDate('created_at', $date)
@@ -135,8 +135,8 @@ class DashboardController extends Controller
                 
             case 'monthly':
             default:
-                // Last 30 days
-                for ($i = 29; $i >= 0; $i--) {
+                // Last 14 days (2 weeks)
+                for ($i = 13; $i >= 0; $i--) {
                     $date = Carbon::now()->subDays($i);
                     $revenue = Booking::where('payment_status', 'paid')
                         ->whereDate('created_at', $date)

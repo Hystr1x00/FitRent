@@ -46,7 +46,7 @@
                                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
                                         </svg>
-                                        {{ $booking->slot->sport }}
+                                            {{ $booking->slot->sport }}
                                     </span>
                                     @if($booking->slot->court_name)
                                         <span class="inline-flex items-center bg-purple-100 text-purple-800 px-3 py-1.5 rounded-full text-sm font-semibold">
@@ -154,6 +154,7 @@
                                 <div class="mt-6 pt-6 border-t border-gray-200">
                                     <h4 class="font-semibold text-gray-900 mb-3">Pengembalian Lapangan</h4>
                                     @if(!$booking->returned_at)
+                                        @if($isCreator)
                                         <form action="{{ route('bookings.return', $booking) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                                             @csrf
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -194,6 +195,21 @@
                                                 </div>
                                             </button>
                                         </form>
+                                        @else
+                                        <!-- Not Creator Message -->
+                                        <div class="p-4 bg-gray-50 border-2 border-gray-200 rounded-lg">
+                                            <div class="flex items-start gap-3">
+                                                <svg class="w-6 h-6 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                                </svg>
+                                                <div>
+                                                    <p class="font-semibold text-gray-800 mb-1">Pengembalian Lapangan</p>
+                                                    <p class="text-sm text-gray-600">Hanya <strong>creator slot</strong> yang dapat mengembalikan lapangan dan mengupload foto kondisi akhir.</p>
+                                                    <p class="text-xs text-gray-500 mt-2">Creator: <strong>{{ $booking->slot->creator->name }}</strong></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
                                     @else
                                         <div class="p-4 bg-green-50 rounded-lg border-2 border-green-200">
                                             <div class="flex items-start gap-3 mb-3">
@@ -206,7 +222,7 @@
                                                     <p class="text-sm font-semibold text-green-800 mb-1">Pengembalian Berhasil</p>
                                                     <p class="text-sm text-green-700">Dikembalikan pada: <span class="font-medium">{{ $booking->returned_at->format('d M Y H:i') }}</span></p>
                                                     
-                                                    @if($booking->return_photo)
+                                                @if($booking->return_photo)
                                                         <a href="{{ asset('storage/' . $booking->return_photo) }}" target="_blank" class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium mt-2">
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -220,7 +236,7 @@
                                                             <p class="text-xs text-gray-600 font-semibold mb-1">Catatan:</p>
                                                             <p class="text-xs text-gray-700">{{ $booking->return_note }}</p>
                                                         </div>
-                                                    @endif
+                                                @endif
                                                 </div>
                                             </div>
                                             

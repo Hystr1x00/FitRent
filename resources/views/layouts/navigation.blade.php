@@ -17,7 +17,6 @@
                 <a href="{{ route('home') }}" class="text-gray-700 hover:text-blue-600 font-medium transition">Home</a>
                 <a href="{{ route('venues.index') }}" class="text-gray-700 hover:text-blue-600 font-medium transition">Lapangan</a>
                 <a href="{{ route('slots.index') }}" class="text-gray-700 hover:text-blue-600 font-medium transition">Open Slots</a>
-                <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition">Tentang</a>
             </div>
             
             <!-- Auth Buttons -->
@@ -91,7 +90,6 @@
                 <a href="{{ route('dashboard') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Dashboard</a>
                 <a href="{{ route('bookings.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">My Bookings</a>
             @endif
-            <a href="#" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Tentang</a>
             @if(!auth()->check())
                 <a href="{{ route('login') }}" class="block px-3 py-3 text-blue-600 hover:bg-blue-50 rounded-lg font-medium">Login</a>
                 <a href="{{ route('register') }}" class="block px-3 py-3 gradient-blue text-white rounded-lg font-medium text-center">Daftar</a>

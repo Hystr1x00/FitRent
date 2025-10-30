@@ -573,7 +573,7 @@
 
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @forelse($slots as $slot)
-                    <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100">
+                    <a href="{{ route('slots.show', $slot) }}" class="block bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 hover:scale-105 transform">
                         <!-- Image Header -->
                         <div class="relative h-48 bg-gradient-to-br from-blue-600 to-blue-800">
                             @if($slot->venue->image)
@@ -647,40 +647,16 @@
                                 </div>
                             </div>
 
-                            <!-- Join Button -->
-                            @auth
-                                @if(auth()->id() === $slot->creator_id)
-                                    <div class="w-full py-3 bg-gray-100 text-gray-600 rounded-xl text-center font-semibold text-sm border-2 border-gray-200">
-                                        <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Slot Anda
-                                    </div>
-                                @elseif($slot->current_participants < $slot->max_participants)
-                                    <form action="{{ route('slots.join', $slot) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl hover:from-green-700 hover:to-green-600 transition font-bold text-lg shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                            </svg>
-                                            Join Slot - Rp {{ number_format($slot->price_per_person + 5000, 0, ',', '.') }}
-                                        </button>
-                                    </form>
-                                @else
-                                    <div class="w-full py-3 bg-red-100 text-red-800 rounded-xl text-center font-bold border-2 border-red-200">
-                                        ⛔ Slot Penuh
-                                    </div>
-                                @endif
-                            @else
-                                <a href="{{ route('login') }}" class="w-full py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-bold text-center block shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                                    </svg>
-                                    Login untuk Join
-                                </a>
-                            @endauth
+                            <!-- View Detail Badge -->
+                            <div class="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl text-center font-bold shadow-lg flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                Lihat Detail & Join
+                            </div>
                         </div>
-                    </div>
+                    </a>
                     @empty
                     <div class="col-span-3 bg-white rounded-xl shadow-md p-12 text-center">
                         <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

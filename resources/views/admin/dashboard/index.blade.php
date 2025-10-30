@@ -56,7 +56,7 @@
                         <option value="daily" {{ $period == 'daily' ? 'selected' : '' }}>Harian</option>
                         <option value="monthly" {{ $period == 'monthly' ? 'selected' : '' }}>Bulanan</option>
                         <option value="yearly" {{ $period == 'yearly' ? 'selected' : '' }}>Tahunan</option>
-                    </select>
+                </select>
                 </form>
             </div>
             <div class="h-56 relative">

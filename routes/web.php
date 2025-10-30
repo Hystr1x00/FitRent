@@ -37,6 +37,7 @@ Route::get('/venues/{venue}/booked-slots', [BookingController::class, 'getBooked
 
 // Slot Routes (Public)
 Route::get('/slots', [SlotController::class, 'index'])->name('slots.index');
+Route::get('/slots/{slot}', [SlotController::class, 'show'])->name('slots.show');
 
 // Protected Routes
 Route::middleware('auth')->group(function () {

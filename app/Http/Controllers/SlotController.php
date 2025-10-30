@@ -15,7 +15,7 @@ class SlotController extends Controller
         $query = Slot::with(['venue', 'creator', 'participants'])
             ->where('status', 'open')  // Only show open slots
             ->where('date', '>=', Carbon::today())
-            ->where('current_participants', '<', 'max_participants')
+            ->whereColumn('current_participants', '<', 'max_participants')  // Fixed: compare 2 columns
             ->whereHas('venue', function($q) {
                 $q->where('available', true);
             })
@@ -44,6 +44,35 @@ class SlotController extends Controller
         $slots = $query->paginate(12);
 
         return view('slots.index', compact('slots'));
+    }
+
+    public function show(Slot $slot)
+    {
+        // Load relationships
+        $slot->load(['venue', 'creator', 'participants.user']);
+        
+        // Check if venue is available
+        if (!$slot->venue || !$slot->venue->available) {
+            abort(404, 'Slot tidak tersedia.');
+        }
+        
+        // Calculate pricing
+        $pricePerPerson = $slot->price_per_person;
+        $serviceFee = 5000;
+        $totalPrice = $pricePerPerson + $serviceFee;
+        
+        // Available slots remaining
+        $slotsRemaining = $slot->max_participants - $slot->current_participants;
+        
+        // Check if current user has already joined this slot
+        $hasJoined = false;
+        if (auth()->check()) {
+            $hasJoined = SlotParticipant::where('slot_id', $slot->id)
+                ->where('user_id', auth()->id())
+                ->exists();
+        }
+        
+        return view('slots.show', compact('slot', 'pricePerPerson', 'serviceFee', 'totalPrice', 'slotsRemaining', 'hasJoined'));
     }
 
     public function join(Request $request, Slot $slot)
@@ -92,10 +121,13 @@ class SlotController extends Controller
             'payment_status' => 'paid',  // Auto-paid for now
         ]);
 
-        // Create slot participant
+        // Create slot participant with booking_id
         SlotParticipant::create([
             'slot_id' => $slot->id,
             'user_id' => $user->id,
+            'booking_id' => $booking->id,
+            'amount_paid' => $totalPrice,
+            'payment_status' => 'paid',
         ]);
 
         // Update slot participants count
