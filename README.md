@@ -167,7 +167,7 @@ php artisan migrate --seed
 
 ## 🗺️ Database Schema
 
-![Database ERD](link-ke-gambar-erd-anda)
+![Database ERD](https://drive.google.com/file/d/1Kp1UqoE7l5Ak42cMzUK_EqyCXMAuH16O/view?usp=sharing)
 
 > *Tambahkan screenshot ERD dari phpMyAdmin atau tool modeling database*
 
@@ -230,21 +230,16 @@ Buka browser dan akses: `http://localhost:8000`
 [Link Video Demo](link-youtube-atau-drive)
 
 ### 📸 Screenshots
-> *Tambahkan beberapa screenshot aplikasi*
+<img width="1896" height="953" alt="image" src="https://github.com/user-attachments/assets/251a98a3-38ba-4bf7-8e2e-84db5ec66a0f" />
+<img width="1912" height="956" alt="image" src="https://github.com/user-attachments/assets/dad5b725-72e5-4235-a5bf-76440d79d3aa" />
+<img width="1897" height="954" alt="image" src="https://github.com/user-attachments/assets/d728a495-d851-4357-94b3-411d41bae1ac" />
+
 
 ---
 
 ## 📄 Lisensi
 
 Project ini dibuat untuk keperluan akademik/portfolio.
-
----
-
-## 📞 Kontak
-
-Untuk pertanyaan atau saran, hubungi:
-- **Email:** [email-team@example.com]
-- **GitHub:** [github.com/username]
 
 ---
 
