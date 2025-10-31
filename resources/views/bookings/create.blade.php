@@ -698,6 +698,18 @@
         function toggleCourtSlots(courtId) {
             const slotsDiv = document.querySelector(`.court-slots-${courtId}`);
             const toggleIcon = document.querySelector(`.court-toggle-${courtId}`);
+            
+            // Add null checks to prevent TypeError
+            if (!slotsDiv) {
+                console.warn(`⚠️ Court slots div not found for court ${courtId}`);
+                return;
+            }
+            
+            if (!toggleIcon) {
+                console.warn(`⚠️ Toggle icon not found for court ${courtId}`);
+                return;
+            }
+            
             slotsDiv.classList.toggle('hidden');
             toggleIcon.classList.toggle('rotate-180');
         }
@@ -981,44 +993,93 @@
             const venueId = {{ $venue->id }};
             
             if (!selectedDate) {
+                console.log('⚠️ No date selected for updateCourtAvailability');
+                return;
+            }
+            
+            // Check if time-slot-wrapper elements exist in DOM
+            const slotWrappers = document.querySelectorAll('.time-slot-wrapper');
+            if (slotWrappers.length === 0) {
+                console.log('⚠️ No time-slot-wrapper found, waiting...');
+                // Retry after a short delay if slots aren't ready yet
+                setTimeout(function() {
+                    updateCourtAvailability();
+                }, 100);
                 return;
             }
             
             try {
                 // Fetch booked slots for the selected date
                 const response = await fetch(`/venues/${venueId}/booked-slots?date=${selectedDate}`);
+                
+                if (!response.ok) {
+                    console.error('❌ Error fetching booked slots:', response.status, response.statusText);
+                    return;
+                }
+                
                 const data = await response.json();
                 const bookedSlots = data.booked_slots || [];
                 
                 console.log('📅 Booked slots for', selectedDate, ':', bookedSlots);
+                console.log('📊 Found', slotWrappers.length, 'time-slot-wrapper elements in DOM');
                 
-                // Update UI for each time slot - CHECK PER COURT + TIME!
+                // FIRST: Reset all slots to available state before processing booked slots
+                // This ensures slots are correctly marked as available if bookedSlots is empty
+                document.querySelectorAll('.time-slot-wrapper').forEach(wrapper => {
+                    // Reset all slots to available state first
+                    wrapper.style.display = '';
+                    wrapper.classList.remove('booked-slot');
+                    const checkbox = wrapper.querySelector('input[type="checkbox"]');
+                    const availableLabel = wrapper.querySelector('.time-slot-available');
+                    if (checkbox) {
+                        checkbox.disabled = false;
+                    }
+                    if (availableLabel) {
+                        availableLabel.classList.remove('hidden');
+                    }
+                });
+                
+                // THEN: Update UI for each time slot - CHECK PER COURT + TIME!
+                // Only hide/mark as booked if slot actually exists in bookedSlots
                 document.querySelectorAll('.time-slot-wrapper').forEach(wrapper => {
                     const courtId = wrapper.getAttribute('data-court-id');
                     const time = wrapper.getAttribute('data-time');
                     const checkbox = wrapper.querySelector('input[type="checkbox"]');
+                    const availableLabel = wrapper.querySelector('.time-slot-available');
+                    
+                    if (!courtId || !time) {
+                        console.warn('Missing court_id or time attribute in wrapper:', wrapper);
+                        return;
+                    }
                     
                     // Check if THIS SPECIFIC court + time combo is booked
-                    const isBooked = bookedSlots.some(slot => 
-                        slot.court_id == courtId && slot.time === time
-                    );
+                    // Only mark as booked if slot exists in bookedSlots array
+                    const isBooked = bookedSlots.length > 0 && bookedSlots.some(slot => {
+                        // Compare court_id as string and time as exact match
+                        const slotCourtId = String(slot.court_id);
+                        const slotTime = String(slot.time);
+                        return slotCourtId === String(courtId) && slotTime === String(time);
+                    });
                     
-                    console.log(`Court ${courtId} @ ${time}: ${isBooked ? 'BOOKED' : 'AVAILABLE'}`);
+                    console.log(`Court ${courtId} @ ${time}: ${isBooked ? '❌ BOOKED' : '✅ AVAILABLE'}`);
                     
                     if (isBooked) {
-                        // Slot is booked - SEMBUNYIKAN wrapper (jangan tampilkan)
+                        // Slot is booked - SEMBUNYIKAN wrapper dan remove dari selected slots
                         wrapper.style.display = 'none';
+                        wrapper.classList.add('booked-slot');
                         if (checkbox) {
                             checkbox.checked = false;
                             checkbox.disabled = true;
+                            // Remove from selectedSlots if exists
+                            selectedSlots = selectedSlots.filter(s => 
+                                !(s.courtId == courtId && s.time === time)
+                            );
                         }
-                    } else {
-                        // Slot is available - TAMPILKAN wrapper
-                        wrapper.style.display = '';
-                        if (checkbox) {
-                            checkbox.disabled = false;
+                        if (availableLabel) {
+                            availableLabel.classList.add('hidden');
                         }
                     }
+                    // else: slot is available (already reset above, no need to do anything)
                 });
                 
                 // Clear selected slots since date changed
@@ -1193,8 +1254,22 @@
                 checkCourtAvailabilityForDate(defaultDateInput.value);
             }
             
-            // Load booked slots for default selected date
-            updateCourtAvailability();
+            // Wait for DOM to fully render time-slot-wrapper elements before checking booked slots
+            // Use setTimeout to ensure Blade-rendered slots are in the DOM
+            setTimeout(function() {
+                // Double-check that time-slot-wrapper elements exist before calling
+                const slotWrappers = document.querySelectorAll('.time-slot-wrapper');
+                if (slotWrappers.length > 0) {
+                    console.log('✅ Time slot wrappers found, calling updateCourtAvailability()');
+                    updateCourtAvailability();
+                } else {
+                    console.log('⚠️ Time slot wrappers not ready, retrying in 100ms...');
+                    // Retry after a short delay
+                    setTimeout(function() {
+                        updateCourtAvailability();
+                    }, 100);
+                }
+            }, 100); // Delay to ensure Blade-rendered slots are in DOM
             
             // Form submit validation - HANYA untuk form booking!
             const bookingForm = document.querySelector('form#bookingForm'); // Cari form dengan ID

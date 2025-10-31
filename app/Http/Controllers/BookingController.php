@@ -140,6 +140,47 @@ class BookingController extends Controller
             // Remove duplicates based on court_id + time combination
             return $item['court_id'] . '|' . $item['time'];
         })->values();
+
+        // VALIDATION: Check if any selected slot is already booked (PREVENT DOUBLE BOOKING)
+        // Lock rows untuk mencegah race condition saat concurrent booking
+        $selectedDate = $request->date;
+        $alreadyBooked = [];
+        
+        foreach ($selections as $sel) {
+            // Check if slot already exists for this court_id + date + time combination
+            // Use lockForUpdate() untuk mencegah concurrent bookings
+            $existingSlot = Slot::where('venue_id', $venue->id)
+                ->where('court_id', $sel['court_id'])
+                ->whereDate('date', $selectedDate)
+                ->where('time', $sel['time'])
+                ->whereIn('status', ['confirmed', 'open'])
+                ->lockForUpdate() // Lock row untuk mencegah race condition
+                ->first();
+            
+            if ($existingSlot) {
+                // Prevent double booking: if slot already exists (either confirmed or open), it cannot be booked again
+                // For private booking: slot must not exist at all
+                // For open slot booking: slot must not exist at all (user can join existing open slots via join feature, not create new)
+                if ($existingSlot->status === 'confirmed') {
+                    $alreadyBooked[] = "{$sel['court_name']} pada {$sel['time']} (sudah dibooking sebagai sewa pribadi)";
+                } elseif ($existingSlot->status === 'open') {
+                    if ($existingSlot->current_participants >= $existingSlot->max_participants) {
+                        $alreadyBooked[] = "{$sel['court_name']} pada {$sel['time']} (slot penuh)";
+                    } else {
+                        // Open slot exists but not full - still cannot create new booking for same slot
+                        $alreadyBooked[] = "{$sel['court_name']} pada {$sel['time']} (sudah ada open slot - silakan join slot yang ada)";
+                    }
+                }
+            }
+        }
+        
+        if (!empty($alreadyBooked)) {
+            DB::rollBack();
+            $slotsList = implode(', ', $alreadyBooked);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', "Maaf, slot berikut sudah dibooking oleh pengguna lain: {$slotsList}. Silakan pilih slot lain.");
+        }
         
         Log::info('📊 AFTER UNIQUE FILTER', [
             'selections_after_unique' => $selections->toArray(),

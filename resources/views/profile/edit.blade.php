@@ -95,7 +95,13 @@
                             <h3 class="text-lg font-semibold text-gray-900 mb-2">Simpan Perubahan</h3>
                             <p class="text-sm text-gray-600 mb-4">Pastikan data sudah benar sebelum menyimpan.</p>
                             <div class="flex flex-col gap-3">
-                                <a href="{{ route('dashboard') }}" class="px-5 py-3 rounded-xl border text-center">Batal</a>
+                                @if(auth()->user()->role === 'user' || auth()->user()->role === null)
+                                    <a href="{{ route('dashboard') }}" class="px-5 py-3 rounded-xl border text-center">Batal</a>
+                                @elseif(auth()->user()->role === 'field_admin')
+                                    <a href="{{ route('admin.dashboard') }}" class="px-5 py-3 rounded-xl border text-center">Batal</a>
+                                @elseif(auth()->user()->role === 'superadmin')
+                                    <a href="{{ route('superadmin.users.index') }}" class="px-5 py-3 rounded-xl border text-center">Batal</a>
+                                @endif
                                 <button class="px-5 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Simpan</button>
                             </div>
                         </div>

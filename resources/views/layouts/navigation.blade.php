@@ -40,11 +40,16 @@
                                 <div class="font-medium">{{ auth()->user()->name }}</div>
                                 <div class="text-gray-500">{{ auth()->user()->email }}</div>
                             </div>
-                            <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
-                            @if(auth()->user() && auth()->user()->role === 'superadmin')
+                            @if(auth()->user()->role === 'user' || auth()->user()->role === null)
+                                <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
+                            @elseif(auth()->user()->role === 'field_admin')
+                                <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Dashboard</a>
+                            @elseif(auth()->user()->role === 'superadmin')
                                 <a href="{{ route('superadmin.users.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Superadmin</a>
                             @endif
-                            <a href="{{ route('bookings.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Bookings</a>
+                            @if(auth()->user()->role === 'user' || auth()->user()->role === null)
+                                <a href="{{ route('bookings.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Bookings</a>
+                            @endif
                             <form method="POST" action="{{ route('logout') }}" class="block">
                                 @csrf
                                 <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -90,11 +95,14 @@
             <a href="{{ route('venues.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Lapangan</a>
             <a href="{{ route('slots.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Open Slots</a>
             @if(auth()->check())
-                <a href="{{ route('dashboard') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Dashboard</a>
-                @if(auth()->user()->role === 'superadmin')
+                @if(auth()->user()->role === 'user' || auth()->user()->role === null)
+                    <a href="{{ route('dashboard') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Dashboard</a>
+                    <a href="{{ route('bookings.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">My Bookings</a>
+                @elseif(auth()->user()->role === 'field_admin')
+                    <a href="{{ route('admin.dashboard') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Admin Dashboard</a>
+                @elseif(auth()->user()->role === 'superadmin')
                     <a href="{{ route('superadmin.users.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Superadmin</a>
                 @endif
-                <a href="{{ route('bookings.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">My Bookings</a>
             @endif
             @if(!auth()->check())
                 <a href="{{ route('login') }}" class="block px-3 py-3 text-blue-600 hover:bg-blue-50 rounded-lg font-medium">Login</a>

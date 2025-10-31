@@ -9,48 +9,72 @@ use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        $user = Auth::user();
+        
+        // Prevent regular users from accessing admin dashboard
+        if ($user->role === 'user' || $user->role === null) {
+            return redirect()->route('dashboard')->with('error', 'User tidak dapat mengakses halaman admin.');
+        }
+        
+        // Build base queries
+        $bookingQuery = Booking::query();
+        $courtQuery = Court::query();
+        
+        // Filter by admin if not superadmin
+        if ($user && $user->role === 'field_admin') {
+            $adminVenueIds = Venue::where('admin_id', $user->id)->pluck('id')->toArray();
+            $bookingQuery->whereIn('venue_id', $adminVenueIds);
+            $courtQuery->where('admin_id', $user->id);
+        }
+        
         // Total bookings
-        $totalBookings = Booking::count();
-        $lastMonthBookings = Booking::where('created_at', '>=', Carbon::now()->subMonth())->count();
-        $twoMonthsAgoBookings = Booking::whereBetween('created_at', [Carbon::now()->subMonths(2), Carbon::now()->subMonth()])->count();
+        $totalBookings = (clone $bookingQuery)->count();
+        $lastMonthBookings = (clone $bookingQuery)->where('created_at', '>=', Carbon::now()->subMonth())->count();
+        $twoMonthsAgoBookings = (clone $bookingQuery)->whereBetween('created_at', [Carbon::now()->subMonths(2), Carbon::now()->subMonth()])->count();
         $bookingGrowth = $twoMonthsAgoBookings > 0 ? (($lastMonthBookings - $twoMonthsAgoBookings) / $twoMonthsAgoBookings * 100) : 0;
 
         // Total revenue
-        $totalRevenue = Booking::where('payment_status', 'paid')->sum('total_price');
-        $lastMonthRevenue = Booking::where('payment_status', 'paid')
+        $totalRevenue = (clone $bookingQuery)->where('payment_status', 'paid')->sum('total_price');
+        $lastMonthRevenue = (clone $bookingQuery)->where('payment_status', 'paid')
             ->where('created_at', '>=', Carbon::now()->subMonth())
             ->sum('total_price');
-        $twoMonthsAgoRevenue = Booking::where('payment_status', 'paid')
+        $twoMonthsAgoRevenue = (clone $bookingQuery)->where('payment_status', 'paid')
             ->whereBetween('created_at', [Carbon::now()->subMonths(2), Carbon::now()->subMonth()])
             ->sum('total_price');
         $revenueGrowth = $twoMonthsAgoRevenue > 0 ? (($lastMonthRevenue - $twoMonthsAgoRevenue) / $twoMonthsAgoRevenue * 100) : 0;
 
         // Courts statistics
-        $activeCourts = Court::where('status', 'active')->count();
-        $totalCourts = Court::count();
+        $activeCourts = (clone $courtQuery)->where('status', 'active')->count();
+        $totalCourts = (clone $courtQuery)->count();
 
         // Average rating
-        $avgRating = Court::avg('rating') ?? 0;
+        $avgRating = (clone $courtQuery)->avg('rating') ?? 0;
         $totalReviews = 0; 
 
         // Top courts by bookings
-        $topCourts = Court::select('courts.*', DB::raw('COUNT(bookings.id) as bookings_count'))
+        $topCourtsQuery = Court::select('courts.*', DB::raw('COUNT(bookings.id) as bookings_count'))
             ->leftJoin('venues', 'courts.venue_id', '=', 'venues.id')
             ->leftJoin('slots', 'venues.id', '=', 'slots.venue_id')
-            ->leftJoin('bookings', 'slots.id', '=', 'bookings.slot_id')
-            ->groupBy('courts.id')
+            ->leftJoin('bookings', 'slots.id', '=', 'bookings.slot_id');
+        
+        if ($user && $user->role === 'field_admin') {
+            $topCourtsQuery->where('courts.admin_id', $user->id);
+        }
+        
+        $topCourts = $topCourtsQuery->groupBy('courts.id')
             ->orderByDesc('bookings_count')
             ->limit(3)
             ->get();
 
         // Recent bookings
-        $recentBookings = Booking::with(['user', 'slot.venue'])
+        $recentBookings = (clone $bookingQuery)->with(['user', 'slot.venue'])
             ->latest()
             ->limit(10)
             ->get();
@@ -85,9 +109,16 @@ class DashboardController extends Controller
                 // Aggregate by day using DB for reliability
                 $start = Carbon::now()->subDays(6)->startOfDay();
                 $end = Carbon::now()->endOfDay();
-                $daily = Booking::selectRaw('DATE(created_at) as d, SUM(total_price) as total')
-                    ->whereBetween('created_at', [$start, $end])
-                    ->groupBy('d')
+                $dailyQuery = Booking::selectRaw('DATE(created_at) as d, SUM(total_price) as total')
+                    ->whereBetween('created_at', [$start, $end]);
+                
+                $user = Auth::user();
+                if ($user && $user->role === 'field_admin') {
+                    $adminVenueIds = Venue::where('admin_id', $user->id)->pluck('id')->toArray();
+                    $dailyQuery->whereIn('venue_id', $adminVenueIds);
+                }
+                
+                $daily = $dailyQuery->groupBy('d')
                     ->pluck('total', 'd');
                 for ($i = 6; $i >= 0; $i--) {
                     $date = Carbon::now()->subDays($i)->toDateString();
@@ -104,9 +135,16 @@ class DashboardController extends Controller
                 // Last 12 months
                 // Aggregate by month for last 12 months
                 $start = Carbon::now()->subMonths(11)->startOfMonth();
-                $monthly = Booking::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as ym, SUM(total_price) as total')
-                    ->where('created_at', '>=', $start)
-                    ->groupBy('ym')
+                $monthlyQuery = Booking::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as ym, SUM(total_price) as total')
+                    ->where('created_at', '>=', $start);
+                
+                $user = Auth::user();
+                if ($user && $user->role === 'field_admin') {
+                    $adminVenueIds = Venue::where('admin_id', $user->id)->pluck('id')->toArray();
+                    $monthlyQuery->whereIn('venue_id', $adminVenueIds);
+                }
+                
+                $monthly = $monthlyQuery->groupBy('ym')
                     ->pluck('total', 'ym');
                 for ($i = 11; $i >= 0; $i--) {
                     $date = Carbon::now()->subMonths($i);
@@ -125,9 +163,16 @@ class DashboardController extends Controller
                 // Last 14 days (2 weeks)
                 // Last 14 days aggregate
                 $start = Carbon::now()->subDays(13)->startOfDay();
-                $daily = Booking::selectRaw('DATE(created_at) as d, SUM(total_price) as total')
-                    ->whereBetween('created_at', [$start, Carbon::now()->endOfDay()])
-                    ->groupBy('d')
+                $dailyQuery = Booking::selectRaw('DATE(created_at) as d, SUM(total_price) as total')
+                    ->whereBetween('created_at', [$start, Carbon::now()->endOfDay()]);
+                
+                $user = Auth::user();
+                if ($user && $user->role === 'field_admin') {
+                    $adminVenueIds = Venue::where('admin_id', $user->id)->pluck('id')->toArray();
+                    $dailyQuery->whereIn('venue_id', $adminVenueIds);
+                }
+                
+                $daily = $dailyQuery->groupBy('d')
                     ->pluck('total', 'd');
                 for ($i = 13; $i >= 0; $i--) {
                     $date = Carbon::now()->subDays($i)->toDateString();

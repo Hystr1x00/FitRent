@@ -20,6 +20,7 @@ class Venue extends Model
         'image',
         'available',
         'facilities',
+        'admin_id',
     ];
 
     protected $casts = [
@@ -42,6 +43,11 @@ class Venue extends Model
     public function courts()
     {
         return $this->hasMany(Court::class);
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
     }
 
     // Normalized image URL (supports stored path or absolute URL)

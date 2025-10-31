@@ -7,30 +7,52 @@ use Illuminate\Http\Request;
 use App\Models\Court;
 use App\Models\Venue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class FieldController extends Controller
 {
     public function index(Request $request)
     {
-        $courts = Court::with('venue')->latest()->paginate(12);
-        $venues = Venue::orderBy('name')->get();
+        $user = Auth::user();
         
-        // Statistics
-        $totalCourts = Court::count();
-        $activeCourts = Court::where('status', 'active')->count();
-        $maintenanceCourts = Court::where('status', 'maintenance')->count();
+        // Filter by admin_id if not superadmin
+        $courtsQuery = Court::with('venue');
+        $venuesQuery = Venue::query();
         
-        $bookingsToday = \App\Models\Booking::whereDate('date', today())->count();
-        $bookingsYesterday = \App\Models\Booking::whereDate('date', today()->subDay())->count();
+        if ($user && $user->role === 'field_admin') {
+            $courtsQuery->where('admin_id', $user->id);
+            $venuesQuery->where('admin_id', $user->id);
+        }
+        
+        $courts = $courtsQuery->latest()->paginate(12);
+        $venues = $venuesQuery->orderBy('name')->get();
+        
+        // Statistics - filter by admin if not superadmin
+        $statsCourtQuery = Court::query();
+        $statsBookingQuery = \App\Models\Booking::query();
+        
+        if ($user && $user->role === 'field_admin') {
+            $statsCourtQuery->where('admin_id', $user->id);
+            // Filter bookings by admin's venues
+            $adminVenueIds = $venues->pluck('id')->toArray();
+            $statsBookingQuery->whereIn('venue_id', $adminVenueIds);
+        }
+        
+        $totalCourts = $statsCourtQuery->count();
+        $activeCourts = (clone $statsCourtQuery)->where('status', 'active')->count();
+        $maintenanceCourts = (clone $statsCourtQuery)->where('status', 'maintenance')->count();
+        
+        $bookingsToday = (clone $statsBookingQuery)->whereDate('date', today())->count();
+        $bookingsYesterday = (clone $statsBookingQuery)->whereDate('date', today()->subDay())->count();
         $bookingGrowth = $bookingsYesterday > 0 ? (($bookingsToday - $bookingsYesterday) / $bookingsYesterday * 100) : 0;
         
-        $revenueThisMonth = \App\Models\Booking::where('payment_status', 'paid')
+        $revenueThisMonth = (clone $statsBookingQuery)->where('payment_status', 'paid')
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->sum('total_price');
         
-        $avgRating = Court::avg('rating') ?? 0;
+        $avgRating = $statsCourtQuery->avg('rating') ?? 0;
         
         return view('admin.fields.index', compact(
             'courts', 
@@ -47,13 +69,35 @@ class FieldController extends Controller
 
     public function create(Request $request)
     {
-        $venues = Venue::orderBy('name')->get();
+        $user = Auth::user();
+        $venuesQuery = Venue::query();
+        
+        // Filter by admin if not superadmin
+        if ($user && $user->role === 'field_admin') {
+            $venuesQuery->where('admin_id', $user->id);
+        }
+        
+        $venues = $venuesQuery->orderBy('name')->get();
         return view('admin.fields.create', compact('venues'));
     }
 
     public function edit(Court $court)
     {
-        $venues = Venue::orderBy('name')->get();
+        $user = Auth::user();
+        
+        // Check if admin can edit this court
+        if ($user && $user->role === 'field_admin' && $court->admin_id !== $user->id) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $venuesQuery = Venue::query();
+        
+        // Filter by admin if not superadmin
+        if ($user && $user->role === 'field_admin') {
+            $venuesQuery->where('admin_id', $user->id);
+        }
+        
+        $venues = $venuesQuery->orderBy('name')->get();
         return view('admin.fields.edit', compact('venues', 'court'));
     }
 
@@ -82,6 +126,10 @@ class FieldController extends Controller
             $venue->rating = number_format(mt_rand(460, 490) / 100, 2);
             $venue->available = true;
             $venue->facilities = array_values($request->input('facilities', []));
+        }
+        // Assign admin_id if not superadmin
+        if (Auth::check() && Auth::user()->role === 'field_admin') {
+            $venue->admin_id = Auth::id();
         }
         if ($request->hasFile('venue_image')) {
             $venue->image = $request->file('venue_image')->store('venues', 'public');
@@ -138,6 +186,17 @@ class FieldController extends Controller
             $data['rating'] = number_format(mt_rand(460, 490) / 100, 2);
         }
 
+        // Assign admin_id if not superadmin (same as venue admin_id)
+        if (Auth::check() && Auth::user()->role === 'field_admin') {
+            $data['admin_id'] = Auth::id();
+        } else {
+            // If superadmin, use venue's admin_id if exists
+            $venue = Venue::find($data['venue_id']);
+            if ($venue && $venue->admin_id) {
+                $data['admin_id'] = $venue->admin_id;
+            }
+        }
+
         $court = Court::create($data);
 
         // Timeslots create
@@ -176,6 +235,13 @@ class FieldController extends Controller
 
     public function update(Request $request, Court $court)
     {
+        $user = Auth::user();
+        
+        // Check if admin can update this court
+        if ($user && $user->role === 'field_admin' && $court->admin_id !== $user->id) {
+            abort(403, 'Unauthorized action.');
+        }
+        
         $data = $this->validateData($request, $court->id);
 
         if ($request->hasFile('image')) {
@@ -203,6 +269,13 @@ class FieldController extends Controller
             $venue->price = $request->input('price_per_session', 0);
             $venue->rating = number_format(mt_rand(460, 490) / 100, 2);
             $venue->available = true;
+        }
+        // Assign admin_id if not superadmin and venue is new
+        if (!$venue->exists && Auth::check() && Auth::user()->role === 'field_admin') {
+            $venue->admin_id = Auth::id();
+        } elseif (!$venue->exists && $court->admin_id) {
+            // If superadmin creating venue, inherit from court
+            $venue->admin_id = $court->admin_id;
         }
         $venue->facilities = array_values($request->input('facilities', []));
         if ($request->hasFile('venue_image')) {
@@ -241,8 +314,10 @@ class FieldController extends Controller
         }
         $data['available_dates'] = $dates;
 
-        // Prevent changing generated code via update
+        // Prevent changing generated code and admin_id via update
         unset($data['court_code']);
+        unset($data['admin_id']); // Always preserve existing admin_id
+        
         $court->update($data);
 
         // Replace timeslots
@@ -283,6 +358,13 @@ class FieldController extends Controller
 
     public function destroy(Court $court)
     {
+        $user = Auth::user();
+        
+        // Check if admin can delete this court
+        if ($user && $user->role === 'field_admin' && $court->admin_id !== $user->id) {
+            abort(403, 'Unauthorized action.');
+        }
+        
         if ($court->image) {
             Storage::disk('public')->delete($court->image);
         }

@@ -4,14 +4,27 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Venue;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
     public function index(Request $request)
     {
+        $user = Auth::user();
+        
+        // Build base query for bookings
+        $bookingQuery = Booking::query();
+        
+        // Filter by admin if not superadmin
+        if ($user && $user->role === 'field_admin') {
+            $adminVenueIds = Venue::where('admin_id', $user->id)->pluck('id')->toArray();
+            $bookingQuery->whereIn('venue_id', $adminVenueIds);
+        }
+        
         // Pending returns (belum diverifikasi admin)
-        $returns = Booking::with('slot.venue','user')
+        $returns = (clone $bookingQuery)->with('slot.venue','user')
             ->where('return_status', 'pending')
             ->orderBy('returned_at','desc')
             ->take(10)
@@ -57,7 +70,7 @@ class BookingController extends Controller
             });
         
         // Unpaid penalties (sudah disetujui admin, tapi user belum bayar)
-        $unpaidPenalties = Booking::with('slot.venue','user')
+        $unpaidPenalties = (clone $bookingQuery)->with('slot.venue','user')
             ->where('return_status', 'approved')
             ->where('penalty_amount', '>', 0)
             ->whereNull('penalty_paid_at')
@@ -66,7 +79,7 @@ class BookingController extends Controller
             ->get();
 
         // All bookings with filters
-        $query = Booking::with(['user', 'slot.venue', 'venue']);
+        $query = (clone $bookingQuery)->with(['user', 'slot.venue', 'venue']);
 
         // Filter by date
         if ($request->filled('date')) {
@@ -127,11 +140,29 @@ class BookingController extends Controller
 
     public function show(Booking $booking)
     {
+        $user = Auth::user();
+        
+        // Check if admin can view this booking
+        if ($user && $user->role === 'field_admin') {
+            $adminVenueIds = Venue::where('admin_id', $user->id)->pluck('id')->toArray();
+            if (!in_array($booking->venue_id, $adminVenueIds)) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
+        
         $booking->load(['user', 'slot.venue', 'venue']);
-        $userHistory = Booking::with(['slot.venue'])
+        
+        $userHistoryQuery = Booking::with(['slot.venue'])
             ->where('user_id', $booking->user_id)
-            ->where('id', '!=', $booking->id)
-            ->latest()
+            ->where('id', '!=', $booking->id);
+        
+        // Filter by admin if not superadmin
+        if ($user && $user->role === 'field_admin') {
+            $adminVenueIds = Venue::where('admin_id', $user->id)->pluck('id')->toArray();
+            $userHistoryQuery->whereIn('venue_id', $adminVenueIds);
+        }
+        
+        $userHistory = $userHistoryQuery->latest()
             ->take(10)
             ->get();
 

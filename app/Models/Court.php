@@ -11,6 +11,7 @@ class Court extends Model
 
     protected $fillable = [
         'venue_id',
+        'admin_id',
         'sport',
         'court_code',
         'name',
@@ -54,6 +55,11 @@ class Court extends Model
     public function availableDates()
     {
         return $this->hasMany(CourtAvailableDate::class);
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
     }
 }
 

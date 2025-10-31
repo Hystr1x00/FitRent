@@ -27,14 +27,16 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $user = Auth::user();
-            // Redirect based on role
+            
+            // Force redirect based on role (ignore intended URL to prevent cross-role access)
             if ($user && $user->role === 'superadmin') {
-                return redirect()->intended(route('superadmin.users.index'));
+                return redirect()->route('superadmin.users.index');
             }
             if ($user && $user->role === 'field_admin') {
-                return redirect()->intended(route('admin.dashboard'));
+                return redirect()->route('admin.dashboard');
             }
-            return redirect()->intended(route('dashboard'));
+            // Default: user role or null
+            return redirect()->route('dashboard');
         }
 
         return back()->withErrors([
@@ -44,9 +46,14 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        // Prevent 419 error by checking if user is authenticated first
+        if (Auth::check()) {
+            Auth::logout();
+        }
+        
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+        
+        return redirect('/')->with('success', 'Anda telah berhasil logout.');
     }
 }

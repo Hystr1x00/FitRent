@@ -1,134 +1,253 @@
-<img width="2515" height="1338" alt="image" src="https://github.com/user-attachments/assets/fdf16c96-cfa7-4970-991d-dff953d706f4" />
-🏟️ FitRent – Sistem Peminjaman dan Manajemen Unit Lapangan
+# 🏟️ FitRent - Sistem Peminjaman dan Manajemen Lapangan Olahraga
 
-👥 Nama Kelompok
-Kelompok Teh Poci - FitRent Development Team
+![FitRent Banner](https://github.com/user-attachments/assets/fdf16c96-cfa7-4970-991d-dff953d706f4)
 
-🧑‍💻 Nama Team
-Team FitRent
-- Farid Ghani
-- Charles Ricky Barnabas
+## 📋 Daftar Isi
+- [Tentang Project](#tentang-project)
+- [Tim Pengembang](#tim-pengembang)
+- [Fitur Utama](#fitur-utama)
+- [Teknologi](#teknologi)
+- [Database Schema](#database-schema)
+- [Instalasi](#instalasi)
+- [Demo](#demo)
 
-💡 Nama Project
-FitRent – Sistem Informasi Peminjaman Lapangan dan Unit Olahraga
+---
 
-⚙️ Deskripsi Singkat
-FitRent adalah sistem web untuk mengelola penyewaan dan pengembalian lapangan olahraga dengan peran Superadmin, Admin Lapangan, dan User (Anggota).
-Sistem ini mendukung manajemen data unit/lapangan, kategori, peminjaman, pengembalian, denda otomatis, dan laporan riwayat penyewaan.
+## 🎯 Tentang Project
 
-🚀 Daftar Fitur dan Penjelasan
-👥 1. Jenis Anggota
-Superadmin → Mengelola seluruh data sistem (admin, user, kategori, unit, dan transaksi).
-Admin Lapangan → Mengelola unit/lapangan, kategori, user, transaksi, serta memverifikasi pengembalian.
-User (Anggota) → Login, sewa lapangan (maksimal 2 lapangan berbeda), upload bukti pengembalian.
-Implementasi:
-Tabel users memiliki kolom role yang menentukan hak akses.
-Middleware auth dan role digunakan untuk membatasi halaman antar peran.
+**FitRent** adalah sistem informasi berbasis web untuk mengelola penyewaan dan pengembalian lapangan olahraga dengan manajemen pengguna multi-role (Superadmin, Admin Lapangan, dan User).
 
-🔐 2. Autentikasi (Login & Registrasi)
-Setiap user wajib login untuk mengakses sistem.
-Menggunakan Laravel Auth (breeze/ui) dengan middleware auth.
-Setelah login, dashboard menyesuaikan role pengguna.
+Sistem ini mendukung manajemen data unit/lapangan, kategori, peminjaman, pengembalian dengan verifikasi, perhitungan denda otomatis, dan laporan riwayat penyewaan.
 
-🧾 3. Registrasi & Profil User
-User harus mendaftar terlebih dahulu untuk dapat meminjam unit.
-Setiap user hanya memiliki satu profil unik.
-User dapat mengubah profil melalui halaman “Edit Profil”.
-Implementasi:
-Relasi User → Profile (one to one)
-Validasi input pada setiap field (required, email, unique)
+---
 
-🏷️ 4. Kategori dan Unit
-Setiap unit dapat memiliki multiple kategori (Many-to-Many).
-Kode unit bersifat unik, nama unit boleh sama.
-Implementasi:
-Tabel: units, categories, dan category_unit (pivot table).
-Validasi unique:units,kode_unit di controller saat menambah data.
+## 👥 Tim Pengembang
 
-🔍 5. Pencarian Unit
-User dapat mencari unit berdasarkan nama unit.
-Query where('nama_unit', 'LIKE', '%keyword%') digunakan pada controller.
+**Kelompok Teh Poci - FitRent Development Team**
 
-🧑‍💼 6. CRUD oleh Admin
-Admin dapat melakukan:
-Tambah, Edit, Hapus data unit, kategori, dan user (anggota).
-Implementasi:
-Controller: AdminController, UnitController, CategoryController, UserController
-Route dengan prefix /admin dan middleware role:admin.
+| Nama | Role |
+|------|------|
+| Farid Ghani | Developer |
+| Charles Ricky Barnabas | Developer |
 
-⏱️ 7. Aturan Penyewaan (Real FitRent Logic)
-Setiap user hanya boleh menyewa maksimal 2 lapangan berbeda.
-Sistem akan menolak jika user mencoba menyewa lapangan yang sama dua kali, atau lebih dari dua total lapangan aktif.
-Admin atau sistem akan memvalidasi ketersediaan lapangan sebelum disewa.
-Data penyewaan mencakup:
+---
+
+## ✨ Fitur Utama
+
+### 1. 👥 Manajemen Multi-Role
+- **Superadmin** - Mengelola seluruh data sistem (admin, user, kategori, unit, dan transaksi)
+- **Admin Lapangan** - Mengelola unit/lapangan, kategori, user, transaksi, serta memverifikasi pengembalian
+- **User (Anggota)** - Login, sewa lapangan (maksimal 2 lapangan berbeda), upload bukti pengembalian
+
+**Implementasi:**
+- Tabel `users` memiliki kolom `role` yang menentukan hak akses
+- Middleware `auth` dan `role` digunakan untuk membatasi halaman antar peran
+
+### 2. 🔐 Autentikasi & Registrasi
+- Sistem login wajib untuk semua pengguna
+- Menggunakan Laravel Auth (Breeze/UI) dengan middleware
+- Dashboard menyesuaikan dengan role pengguna
+- Setiap user memiliki satu profil unik dengan fitur edit profil
+
+**Implementasi:**
+- Relasi `User → Profile` (one to one)
+- Validasi input ketat (required, email, unique)
+
+### 3. 🏷️ Manajemen Kategori & Unit
+- Setiap unit dapat memiliki multiple kategori (Many-to-Many)
+- Kode unit bersifat unik, nama unit boleh sama
+- Pencarian unit berdasarkan nama
+
+**Implementasi:**
+- Tabel: `units`, `categories`, dan `category_unit` (pivot table)
+- Validasi `unique:units,kode_unit` pada controller
+- Query pencarian: `where('nama_unit', 'LIKE', '%keyword%')`
+
+### 4. 🧑‍💼 CRUD Admin
+Admin dapat melakukan operasi:
+- ✅ Tambah, Edit, Hapus data unit
+- ✅ Kelola kategori lapangan
+- ✅ Manajemen user (anggota)
+
+**Implementasi:**
+- Controllers: `AdminController`, `UnitController`, `CategoryController`, `UserController`
+- Route dengan prefix `/admin` dan middleware `role:admin`
+
+### 5. ⏱️ Aturan Penyewaan
+**Batasan:**
+- User hanya boleh menyewa **maksimal 2 lapangan berbeda**
+- Tidak boleh menyewa lapangan yang sama dua kali
+- Validasi ketersediaan lapangan oleh sistem
+
+**Data Penyewaan:**
 - Tanggal dan jam mulai sewa
 - Tanggal dan jam selesai sewa
-- Status (active, waiting_approval, returned)
+- Status: `active`, `waiting_approval`, `returned`
 
-🔁 8. Pengembalian Unit
-Proses pengembalian lapangan di FitRent tidak otomatis — user wajib mengajukan konfirmasi dengan bukti dan waktu aktual.
-🧍‍♂️ Langkah oleh User:
-- Upload bukti foto bahwa lapangan sudah kosong.
-- Isi tanggal dan jam pengembalian aktual.
-- Sistem menyimpan data dan mengubah status transaksi jadi waiting_approval.
-- Admin menerima notifikasi untuk memverifikasi pengembalian.
-🧑‍💼 Langkah oleh Admin:
-- Admin membuka detail pengembalian dan melihat bukti foto + waktu pengembalian.
-- Sistem menghitung selisih waktu keterlambatan antara jam seharusnya dan jam aktual.
-- Jika keterlambatan ≤ 15 menit, tidak dikenakan denda.
-- Jika keterlambatan > 15 menit, maka dihitung:
-    Rp50.000 per 5 menit keterlambatan setelah 15 menit pertama.
-Contoh:
-Telat 20 menit → 15 menit aman, 5 menit denda → Rp50.000
-Telat 30 menit → 15 menit aman, 15 menit denda → 3 × Rp50.000 = Rp150.000
-Admin menyetujui pengembalian → status berubah ke returned.
-Unit otomatis jadi “available” dan bisa disewa lagi.
+### 6. 🔁 Sistem Pengembalian dengan Verifikasi
 
-📋 9. Riwayat & Laporan
-Admin dapat melihat semua riwayat peminjaman user dan mencetak laporan.
-User hanya dapat melihat riwayat miliknya sendiri.
-Implementasi:
-Filtering berdasarkan auth()->user()->role.
-Menggunakan DOMPDF untuk cetak laporan PDF.
+#### 🧍‍♂️ Proses oleh User:
+1. Upload bukti foto lapangan sudah kosong
+2. Isi tanggal dan jam pengembalian aktual
+3. Status transaksi berubah jadi `waiting_approval`
+4. Admin menerima notifikasi untuk verifikasi
 
-✅ 10. Validasi Field
-Setiap form penting menggunakan validasi Laravel ($request->validate()):
-required, unique, email, numeric, date
-Validasi mencegah data kosong dan duplikasi pada proses input/update.
+#### 🧑‍💼 Proses oleh Admin:
+1. Admin melihat detail pengembalian + bukti foto
+2. Sistem menghitung keterlambatan otomatis
+3. **Perhitungan Denda:**
+   - ✅ Keterlambatan ≤ 15 menit: **Tidak ada denda**
+   - ❌ Keterlambatan > 15 menit: **Rp50.000 per 5 menit** (setelah 15 menit pertama)
 
-🧱 11. Database & Seeder
-Struktur tabel meliputi:
-users, profiles, categories, units, category_unit, borrows, returns
-Seeder awal:
-1 Superadmin, 1 Admin, beberapa User
-Beberapa kategori (misal: Futsal, Badminton)
-Unit contoh (Lapangan 1, Lapangan 2, dst)
+**Contoh Perhitungan:**
+```
+Telat 20 menit → 15 menit aman, 5 menit denda
+→ Denda: Rp50.000
 
-Seeder: UserSeeder, CategorySeeder, UnitSeeder
-Dijalankan dengan:
+Telat 30 menit → 15 menit aman, 15 menit denda (3 × 5 menit)
+→ Denda: 3 × Rp50.000 = Rp150.000
+```
+
+4. Admin menyetujui pengembalian → status berubah ke `returned`
+5. Unit otomatis tersedia untuk disewa lagi
+
+### 7. 📋 Riwayat & Laporan
+- Admin dapat melihat **semua riwayat peminjaman** dan mencetak laporan
+- User hanya melihat **riwayat miliknya sendiri**
+
+**Implementasi:**
+- Filtering berdasarkan `auth()->user()->role`
+- Export laporan PDF menggunakan **DOMPDF**
+
+### 8. ✅ Validasi Data
+Setiap form menggunakan validasi Laravel (`$request->validate()`):
+- `required` - Field wajib diisi
+- `unique` - Tidak boleh duplikat
+- `email` - Format email valid
+- `numeric` - Hanya angka
+- `date` - Format tanggal valid
+
+### 9. 🧱 Database & Seeder
+
+**Struktur Tabel:**
+- `users` - Data pengguna dan role
+- `profiles` - Profil detail pengguna
+- `categories` - Kategori lapangan
+- `units` - Data lapangan/unit
+- `category_unit` - Relasi many-to-many
+- `borrows` - Data peminjaman
+- `returns` - Data pengembalian
+
+**Seeder Awal:**
+- 1 Superadmin
+- 1 Admin
+- Beberapa User contoh
+- Kategori: Futsal, Badminton, dll.
+- Unit: Lapangan 1, Lapangan 2, dst.
+
+**Menjalankan Seeder:**
+```bash
 php artisan migrate --seed
+```
 
-🗺️ Skema Database
-Tambahkan gambar hasil ERD / skema dari phpMyAdmin:
+---
 
+## 🛠️ Teknologi
 
-🎥 Demo Website
-Tambahkan link video demo:
+| Teknologi | Kegunaan |
+|-----------|----------|
+| Laravel 10 | Framework utama |
+| MySQL | Database |
+| Blade Template | Frontend View |
+| Bootstrap / TailwindCSS | Styling |
+| DOMPDF | Export laporan PDF |
+| Laravel Breeze/UI | Autentikasi |
 
+---
 
-🧰 Teknologi yang Digunakan
-Laravel 10 (Framework utama)
-MySQL (Database)
-Blade Template (Frontend View)
-Bootstrap / TailwindCSS (Styling)
-DOMPDF (Laporan PDF)
-Laravel Auth (breeze/ui) (Autentikasi)
+## 🗺️ Database Schema
 
-⚙️ Cara Menjalankan Project
+![Database ERD](link-ke-gambar-erd-anda)
+
+> *Tambahkan screenshot ERD dari phpMyAdmin atau tool modeling database*
+
+---
+
+## 🚀 Instalasi
+
+### Prasyarat
+- PHP >= 8.1
+- Composer
+- MySQL
+- Node.js & NPM (opsional, untuk asset)
+
+### Langkah Instalasi
+
+```bash
+# Clone repository
 git clone https://github.com/username/FitRent.git
 cd FitRent
+
+# Install dependencies
 composer install
+
+# Copy environment file
 cp .env.example .env
+
+# Generate application key
 php artisan key:generate
+
+# Konfigurasi database di file .env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=fitrent
+DB_USERNAME=root
+DB_PASSWORD=
+
+# Migrasi database dan seed data
 php artisan migrate --seed
+
+# Jalankan server
 php artisan serve
+```
+
+Buka browser dan akses: `http://localhost:8000`
+
+### Login Default
+
+| Role | Email | Password |
+|------|-------|----------|
+| Superadmin | superadmin@fitrent.com | password |
+| Admin | admin@fitrent.com | password |
+| User | user@fitrent.com | password |
+
+---
+
+## 🎥 Demo
+
+### 📹 Video Demo
+[Link Video Demo](link-youtube-atau-drive)
+
+### 📸 Screenshots
+> *Tambahkan beberapa screenshot aplikasi*
+
+---
+
+## 📄 Lisensi
+
+Project ini dibuat untuk keperluan akademik/portfolio.
+
+---
+
+## 📞 Kontak
+
+Untuk pertanyaan atau saran, hubungi:
+- **Email:** [email-team@example.com]
+- **GitHub:** [github.com/username]
+
+---
+
+<div align="center">
+  <strong>Dibuat dengan ❤️ oleh Kelompok Teh Poci</strong>
+</div>

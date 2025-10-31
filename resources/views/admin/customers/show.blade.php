@@ -9,18 +9,18 @@
         <div class="bg-white rounded-xl shadow p-6">
             <div class="flex items-center gap-3 mb-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg text-white font-bold flex items-center justify-center">
-                    {{ strtoupper(substr($user->name,0,1)) }}
+                    {{ strtoupper(substr($customer->name,0,1)) }}
                 </div>
                 <div>
-                    <div class="font-semibold text-gray-900">{{ $user->name }}</div>
-                    <div class="text-sm text-gray-600">{{ $user->email }}</div>
-                    @if($user->phone)
-                        <div class="text-sm text-gray-600">{{ $user->phone }}</div>
+                    <div class="font-semibold text-gray-900">{{ $customer->name }}</div>
+                    <div class="text-sm text-gray-600">{{ $customer->email }}</div>
+                    @if($customer->phone)
+                        <div class="text-sm text-gray-600">{{ $customer->phone }}</div>
                     @endif
                 </div>
             </div>
             <div class="text-sm text-gray-600">
-                <div class="flex items-center justify-between py-2 border-t"><span>Total Booking</span><span class="font-semibold text-gray-900">{{ $user->bookings_count }}</span></div>
+                <div class="flex items-center justify-between py-2 border-t"><span>Total Booking</span><span class="font-semibold text-gray-900">{{ $customer->bookings_count }}</span></div>
             </div>
         </div>
     </div>

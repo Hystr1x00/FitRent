@@ -16,14 +16,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            VenueSeeder::class,
+            SuperAdminSeeder::class,
+            AdminSeeder::class,
+            AssignKingPadelDataSeeder::class, // Assign existing King Padel data to admin
+            // VenueSeeder::class
         ]);
-
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        //     'phone' => '08123456789',
-        //     'password' => bcrypt('password'),
-        // ]);
     }
 }

@@ -13,6 +13,15 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
+        // Prevent admin/superadmin from accessing user dashboard
+        if ($user->role === 'field_admin') {
+            return redirect()->route('admin.dashboard')->with('error', 'Admin tidak dapat mengakses halaman user.');
+        }
+        
+        if ($user->role === 'superadmin') {
+            return redirect()->route('superadmin.users.index')->with('error', 'Super Admin tidak dapat mengakses halaman user.');
+        }
+        
         // Get user's bookings with slot and venue data
         $bookings = $user->bookings()
             ->with(['slot.venue'])

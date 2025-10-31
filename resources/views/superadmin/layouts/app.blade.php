@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>FitRent Superadmin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -52,7 +53,7 @@
                                 <div class="text-gray-600 truncate">{{ $su?->email ?? '' }}</div>
                             </div>
                             <div class="border-t">
-                                <form method="POST" action="{{ route('logout') }}">
+                                <form method="POST" action="{{ route('logout') }}" id="logoutFormSuperadmin">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50">Logout</button>
                                 </form>
@@ -111,6 +112,20 @@
                 if (!inside) { suMenu.classList.add('hidden'); if (suCaret) suCaret.classList.remove('rotate-180'); }
             }
         });
+
+        // Refresh CSRF token before logout to prevent 419 errors
+        const logoutFormSuperadmin = document.getElementById('logoutFormSuperadmin');
+        if (logoutFormSuperadmin) {
+            logoutFormSuperadmin.addEventListener('submit', function(e) {
+                const metaToken = document.querySelector('meta[name="csrf-token"]');
+                if (metaToken) {
+                    const tokenInput = logoutFormSuperadmin.querySelector('input[name="_token"]');
+                    if (tokenInput) {
+                        tokenInput.value = metaToken.getAttribute('content');
+                    }
+                }
+            });
+        }
     </script>
     @stack('scripts')
 </body>

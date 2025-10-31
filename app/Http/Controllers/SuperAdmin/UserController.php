@@ -11,6 +11,19 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        $user = auth()->user();
+        
+        // Prevent non-superadmin from accessing superadmin routes
+        if ($user->role !== 'superadmin') {
+            if ($user->role === 'field_admin') {
+                return redirect()->route('admin.dashboard')->with('error', 'Hanya Super Admin yang dapat mengakses halaman ini.');
+            }
+            if ($user->role === 'user' || $user->role === null) {
+                return redirect()->route('dashboard')->with('error', 'Hanya Super Admin yang dapat mengakses halaman ini.');
+            }
+            abort(403, 'Unauthorized access.');
+        }
+        
         $role = $request->query('role');
         $query = User::query();
 
