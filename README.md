@@ -1,61 +1,134 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<img width="2515" height="1338" alt="image" src="https://github.com/user-attachments/assets/fdf16c96-cfa7-4970-991d-dff953d706f4" />
+🏟️ FitRent – Sistem Peminjaman dan Manajemen Unit Lapangan
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+👥 Nama Kelompok
+Kelompok Teh Poci - FitRent Development Team
 
-## About Laravel
+🧑‍💻 Nama Team
+Team FitRent
+- Farid Ghani
+- Charles Ricky Barnabas
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+💡 Nama Project
+FitRent – Sistem Informasi Peminjaman Lapangan dan Unit Olahraga
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+⚙️ Deskripsi Singkat
+FitRent adalah sistem web untuk mengelola penyewaan dan pengembalian lapangan olahraga dengan peran Superadmin, Admin Lapangan, dan User (Anggota).
+Sistem ini mendukung manajemen data unit/lapangan, kategori, peminjaman, pengembalian, denda otomatis, dan laporan riwayat penyewaan.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+🚀 Daftar Fitur dan Penjelasan
+👥 1. Jenis Anggota
+Superadmin → Mengelola seluruh data sistem (admin, user, kategori, unit, dan transaksi).
+Admin Lapangan → Mengelola unit/lapangan, kategori, user, transaksi, serta memverifikasi pengembalian.
+User (Anggota) → Login, sewa lapangan (maksimal 2 lapangan berbeda), upload bukti pengembalian.
+Implementasi:
+Tabel users memiliki kolom role yang menentukan hak akses.
+Middleware auth dan role digunakan untuk membatasi halaman antar peran.
 
-## Learning Laravel
+🔐 2. Autentikasi (Login & Registrasi)
+Setiap user wajib login untuk mengakses sistem.
+Menggunakan Laravel Auth (breeze/ui) dengan middleware auth.
+Setelah login, dashboard menyesuaikan role pengguna.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+🧾 3. Registrasi & Profil User
+User harus mendaftar terlebih dahulu untuk dapat meminjam unit.
+Setiap user hanya memiliki satu profil unik.
+User dapat mengubah profil melalui halaman “Edit Profil”.
+Implementasi:
+Relasi User → Profile (one to one)
+Validasi input pada setiap field (required, email, unique)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+🏷️ 4. Kategori dan Unit
+Setiap unit dapat memiliki multiple kategori (Many-to-Many).
+Kode unit bersifat unik, nama unit boleh sama.
+Implementasi:
+Tabel: units, categories, dan category_unit (pivot table).
+Validasi unique:units,kode_unit di controller saat menambah data.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+🔍 5. Pencarian Unit
+User dapat mencari unit berdasarkan nama unit.
+Query where('nama_unit', 'LIKE', '%keyword%') digunakan pada controller.
 
-## Laravel Sponsors
+🧑‍💼 6. CRUD oleh Admin
+Admin dapat melakukan:
+Tambah, Edit, Hapus data unit, kategori, dan user (anggota).
+Implementasi:
+Controller: AdminController, UnitController, CategoryController, UserController
+Route dengan prefix /admin dan middleware role:admin.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+⏱️ 7. Aturan Penyewaan (Real FitRent Logic)
+Setiap user hanya boleh menyewa maksimal 2 lapangan berbeda.
+Sistem akan menolak jika user mencoba menyewa lapangan yang sama dua kali, atau lebih dari dua total lapangan aktif.
+Admin atau sistem akan memvalidasi ketersediaan lapangan sebelum disewa.
+Data penyewaan mencakup:
+- Tanggal dan jam mulai sewa
+- Tanggal dan jam selesai sewa
+- Status (active, waiting_approval, returned)
 
-### Premium Partners
+🔁 8. Pengembalian Unit
+Proses pengembalian lapangan di FitRent tidak otomatis — user wajib mengajukan konfirmasi dengan bukti dan waktu aktual.
+🧍‍♂️ Langkah oleh User:
+- Upload bukti foto bahwa lapangan sudah kosong.
+- Isi tanggal dan jam pengembalian aktual.
+- Sistem menyimpan data dan mengubah status transaksi jadi waiting_approval.
+- Admin menerima notifikasi untuk memverifikasi pengembalian.
+🧑‍💼 Langkah oleh Admin:
+- Admin membuka detail pengembalian dan melihat bukti foto + waktu pengembalian.
+- Sistem menghitung selisih waktu keterlambatan antara jam seharusnya dan jam aktual.
+- Jika keterlambatan ≤ 15 menit, tidak dikenakan denda.
+- Jika keterlambatan > 15 menit, maka dihitung:
+    Rp50.000 per 5 menit keterlambatan setelah 15 menit pertama.
+Contoh:
+Telat 20 menit → 15 menit aman, 5 menit denda → Rp50.000
+Telat 30 menit → 15 menit aman, 15 menit denda → 3 × Rp50.000 = Rp150.000
+Admin menyetujui pengembalian → status berubah ke returned.
+Unit otomatis jadi “available” dan bisa disewa lagi.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+📋 9. Riwayat & Laporan
+Admin dapat melihat semua riwayat peminjaman user dan mencetak laporan.
+User hanya dapat melihat riwayat miliknya sendiri.
+Implementasi:
+Filtering berdasarkan auth()->user()->role.
+Menggunakan DOMPDF untuk cetak laporan PDF.
 
-## Contributing
+✅ 10. Validasi Field
+Setiap form penting menggunakan validasi Laravel ($request->validate()):
+required, unique, email, numeric, date
+Validasi mencegah data kosong dan duplikasi pada proses input/update.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+🧱 11. Database & Seeder
+Struktur tabel meliputi:
+users, profiles, categories, units, category_unit, borrows, returns
+Seeder awal:
+1 Superadmin, 1 Admin, beberapa User
+Beberapa kategori (misal: Futsal, Badminton)
+Unit contoh (Lapangan 1, Lapangan 2, dst)
 
-## Code of Conduct
+Seeder: UserSeeder, CategorySeeder, UnitSeeder
+Dijalankan dengan:
+php artisan migrate --seed
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+🗺️ Skema Database
+Tambahkan gambar hasil ERD / skema dari phpMyAdmin:
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+🎥 Demo Website
+Tambahkan link video demo:
 
-## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+🧰 Teknologi yang Digunakan
+Laravel 10 (Framework utama)
+MySQL (Database)
+Blade Template (Frontend View)
+Bootstrap / TailwindCSS (Styling)
+DOMPDF (Laporan PDF)
+Laravel Auth (breeze/ui) (Autentikasi)
+
+⚙️ Cara Menjalankan Project
+git clone https://github.com/username/FitRent.git
+cd FitRent
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
