@@ -166,10 +166,8 @@ php artisan migrate --seed
 ---
 
 ## 🗺️ Database Schema
+<img width="1216" height="1756" alt="fitrent erd" src="https://github.com/user-attachments/assets/0f156907-c172-49c9-ae8e-07efd46e4f37" />
 
-![Database ERD](https://drive.google.com/file/d/1Kp1UqoE7l5Ak42cMzUK_EqyCXMAuH16O/view?usp=sharing)
-
-> *Tambahkan screenshot ERD dari phpMyAdmin atau tool modeling database*
 
 ---
 
