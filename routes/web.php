@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
+use App\Http\Controllers\SuperAdmin\UserController as SuperAdminUserController;
+use App\Http\Controllers\ProfileController;
 
 // Public Routes
 Route::get('/', function () {
@@ -43,6 +45,9 @@ Route::get('/slots/{slot}', [SlotController::class, 'show'])->name('slots.show')
 Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     
     // Booking
     Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
@@ -66,8 +71,23 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::delete('/fields/{court}', [AdminFieldController::class, 'destroy'])->name('fields.destroy');
     Route::get('/venues/{venue}', [AdminFieldController::class, 'getVenueData'])->name('venues.data');
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+    Route::get('/bookings/{booking}', [AdminBookingController::class, 'show'])->name('bookings.show');
     Route::post('/bookings/{booking}/confirm-return', [AdminBookingController::class, 'confirmReturn'])->name('bookings.confirmReturn');
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers/{user}', [AdminCustomerController::class, 'show'])->name('customers.show');
+    // Admin Settings (profile)
+    Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+});
+
+// Superadmin Routes (khusus superadmin)
+Route::middleware(['auth', 'superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+    Route::get('/users', [SuperAdminUserController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [SuperAdminUserController::class, 'create'])->name('users.create');
+    Route::post('/users', [SuperAdminUserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}/edit', [SuperAdminUserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [SuperAdminUserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [SuperAdminUserController::class, 'destroy'])->name('users.destroy');
 });
 

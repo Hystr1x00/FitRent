@@ -1,16 +1,17 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-class ProfileController extends Controller
+class SettingsController extends Controller
 {
     public function edit(Request $request)
     {
         $user = $request->user();
-        return view('profile.edit', compact('user'));
+        return view('admin.settings.edit', compact('user'));
     }
 
     public function update(Request $request)
@@ -22,20 +23,18 @@ class ProfileController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'favorite_sports' => ['nullable', 'array'],
-            'favorite_sports.*' => ['string', 'max:50'],
         ]);
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
         $user->phone = $validated['phone'] ?? null;
-        $user->favorite_sports = $validated['favorite_sports'] ?? [];
         if (!empty($validated['password'])) {
             $user->password = $validated['password'];
         }
         $user->save();
 
-        return redirect()->route('profile.edit')->with('success', 'Profil berhasil diperbarui.');
+        return redirect()->route('admin.settings.edit')->with('success', 'Profil admin berhasil diperbarui.');
     }
 }
+
 

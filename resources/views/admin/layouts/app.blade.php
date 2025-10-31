@@ -74,7 +74,7 @@
                         <i class="fas fa-users text-lg w-5"></i>
                         <span class="font-medium">Pelanggan</span>
                     </a>
-                    <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition">
+                    <a href="{{ route('admin.settings.edit') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.settings.*') ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600' }}">
                         <i class="fas fa-cog text-lg w-5"></i>
                         <span class="font-medium">Pengaturan</span>
                     </a>
@@ -82,11 +82,27 @@
 
                 <!-- User Profile -->
                 <div class="px-4 py-4 border-t border-gray-200">
-                    <div class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <img src="https://ui-avatars.com/api/?name=Admin+FitRent&background=3b82f6&color=fff" class="w-10 h-10 rounded-full" alt="Admin">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-800 truncate">Admin FitRent</p>
-                            <p class="text-xs text-gray-500 truncate">admin@fitrent.com</p>
+                    <div class="relative">
+                        <button id="adminProfileBtn" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-50 text-left">
+                            @php($admin = auth()->user())
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($admin?->name ?? 'Admin') }}&background=3b82f6&color=fff" class="w-10 h-10 rounded-full" alt="{{ $admin?->name ?? 'Admin' }}">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate">{{ $admin?->name ?? 'Admin' }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ $admin?->email ?? '' }}</p>
+                            </div>
+                            <i class="fas fa-chevron-up text-gray-400" id="adminProfileCaret"></i>
+                        </button>
+                        <div id="adminProfileMenu" class="hidden absolute left-2 right-2 bottom-14 bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden z-50">
+                            <div class="px-4 py-3 text-sm">
+                                <div class="font-medium text-gray-900 truncate">{{ $admin?->name ?? 'Admin' }}</div>
+                                <div class="text-gray-600 truncate">{{ $admin?->email ?? '' }}</div>
+                            </div>
+                            <div class="border-t">
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50">Logout</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -153,6 +169,33 @@
         window.addEventListener('resize', function() {
             if (window.innerWidth >= 1024) {
                 closeSidebarFunc();
+            }
+        });
+
+        // Admin profile dropdown
+        const adminProfileBtn = document.getElementById('adminProfileBtn');
+        const adminProfileMenu = document.getElementById('adminProfileMenu');
+        const adminProfileCaret = document.getElementById('adminProfileCaret');
+
+        function toggleAdminMenu() {
+            if (!adminProfileMenu) return;
+            adminProfileMenu.classList.toggle('hidden');
+            if (adminProfileCaret) adminProfileCaret.classList.toggle('rotate-180');
+        }
+        if (adminProfileBtn) {
+            adminProfileBtn.addEventListener('click', function(e){
+                e.stopPropagation();
+                toggleAdminMenu();
+            });
+        }
+        document.addEventListener('click', function(e){
+            if (!adminProfileMenu || !adminProfileBtn) return;
+            if (!adminProfileMenu.classList.contains('hidden')) {
+                const isInside = adminProfileBtn.contains(e.target) || adminProfileMenu.contains(e.target);
+                if (!isInside) {
+                    adminProfileMenu.classList.add('hidden');
+                    if (adminProfileCaret) adminProfileCaret.classList.remove('rotate-180');
+                }
             }
         });
     </script>

@@ -11,7 +11,9 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::withCount('bookings');
+        $query = User::withCount('bookings')
+            ->where('role', 'user')
+            ->whereHas('bookings');
 
         // Search by name, email, or phone
         if ($request->filled('search')) {
@@ -38,6 +40,17 @@ class CustomerController extends Controller
         $customers = $query->latest()->paginate(15);
 
         return view('admin.customers.index', compact('customers'));
+    }
+
+    public function show(User $user)
+    {
+        // Only allow viewing real customers with bookings
+        abort_unless($user->role === 'user', 404);
+
+        $user->loadCount('bookings');
+        $bookings = $user->bookings()->with(['slot.venue'])->latest()->paginate(10);
+
+        return view('admin.customers.show', compact('user', 'bookings'));
     }
 }
 

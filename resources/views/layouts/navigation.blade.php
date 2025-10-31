@@ -41,6 +41,9 @@
                                 <div class="text-gray-500">{{ auth()->user()->email }}</div>
                             </div>
                             <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
+                            @if(auth()->user() && auth()->user()->role === 'superadmin')
+                                <a href="{{ route('superadmin.users.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Superadmin</a>
+                            @endif
                             <a href="{{ route('bookings.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Bookings</a>
                             <form method="POST" action="{{ route('logout') }}" class="block">
                                 @csrf
@@ -88,6 +91,9 @@
             <a href="{{ route('slots.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Open Slots</a>
             @if(auth()->check())
                 <a href="{{ route('dashboard') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Dashboard</a>
+                @if(auth()->user()->role === 'superadmin')
+                    <a href="{{ route('superadmin.users.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">Superadmin</a>
+                @endif
                 <a href="{{ route('bookings.index') }}" class="block px-3 py-3 text-gray-700 hover:bg-blue-50 rounded-lg font-medium">My Bookings</a>
             @endif
             @if(!auth()->check())

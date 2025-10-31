@@ -18,11 +18,11 @@ class ReportController extends Controller
         $period = $request->get('period', 'month');
         $sport = $request->get('sport', '');
 
-        // Date range based on period
+        // Date range based on period (calendar boundaries)
         $dateRange = $this->getDateRange($period);
         
-        // Build query with filters
-        $query = Booking::whereBetween('created_at', $dateRange);
+        // Build query with filters (use booking date for reports)
+        $query = Booking::whereBetween('date', $dateRange);
         
         if ($sport) {
             $query->whereHas('slot.venue', function($q) use ($sport) {
@@ -34,7 +34,7 @@ class ReportController extends Controller
         $totalBookings = $query->count();
 
         // Total revenue
-        $totalRevenue = $query->where('payment_status', 'paid')->sum('total_price');
+        $totalRevenue = (clone $query)->sum('total_price');
 
         // Cancel rate
         $cancelledCount = (clone $query)->where('status', 'cancelled')->count();
@@ -72,10 +72,10 @@ class ReportController extends Controller
         $now = Carbon::now();
         
         return match($period) {
-            'week' => [$now->copy()->subWeek(), $now],
-            'month' => [$now->copy()->subMonth(), $now],
-            '3months' => [$now->copy()->subMonths(3), $now],
-            'year' => [$now->copy()->subYear(), $now],
+            'week' => [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()],
+            'month' => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()],
+            '3months' => [$now->copy()->subMonths(2)->startOfMonth(), $now->copy()->endOfMonth()],
+            'year' => [$now->copy()->startOfYear(), $now->copy()->endOfYear()],
             default => [$now->copy()->subMonth(), $now],
         };
     }
@@ -83,11 +83,10 @@ class ReportController extends Controller
     private function getRevenuePerDay($dateRange, $sport = '')
     {
         $query = Booking::select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(total_price) as revenue')
+                DB::raw('bookings.date as d'),
+                DB::raw('SUM(bookings.total_price) as revenue')
             )
-            ->whereBetween('created_at', $dateRange)
-            ->where('payment_status', 'paid');
+            ->whereBetween('bookings.date', $dateRange);
 
         if ($sport) {
             $query->whereHas('slot.venue', function($q) use ($sport) {
@@ -95,10 +94,10 @@ class ReportController extends Controller
             });
         }
 
-        $revenues = $query->groupBy(DB::raw('DATE(created_at)'))
-            ->orderBy('date')
+        $revenues = $query->groupBy(DB::raw('bookings.date'))
+            ->orderBy('d')
             ->get()
-            ->pluck('revenue', 'date')
+            ->pluck('revenue', 'd')
             ->toArray();
 
         // Fill missing dates with 0
@@ -108,9 +107,10 @@ class ReportController extends Controller
         
         while ($start <= $end) {
             $dateKey = $start->format('Y-m-d');
+            $revenueValue = isset($revenues[$dateKey]) ? (float)$revenues[$dateKey] : 0.0;
             $result[] = [
                 'date' => $start->format('M d'),
-                'revenue' => $revenues[$dateKey] ?? 0
+                'revenue' => $revenueValue,
             ];
             $start->addDay();
         }

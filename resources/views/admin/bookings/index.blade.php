@@ -129,9 +129,11 @@
                     <th class="py-3 pr-6">Tanggal</th>
                     <th class="py-3 pr-6">Pelanggan</th>
                     <th class="py-3 pr-6">Lapangan</th>
+                    <th class="py-3 pr-6">Jenis</th>
                     <th class="py-3 pr-6">Jam</th>
                     <th class="py-3 pr-6">Total</th>
-                    <th class="py-3">Status</th>
+                    <th class="py-3 pr-6">Status</th>
+                    <th class="py-3">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -141,9 +143,10 @@
                     <td class="py-3 pr-6 text-gray-800">{{ $booking->date ? $booking->date->format('d M Y') : '-' }}</td>
                     <td class="py-3 pr-6 text-gray-800">{{ $booking->user->name ?? '-' }}</td>
                     <td class="py-3 pr-6 text-gray-800">{{ $booking->slot->venue->name ?? $booking->venue->name ?? '-' }}</td>
+                    <td class="py-3 pr-6 text-gray-800">{{ $booking->type ?? '-' }}</td>
                     <td class="py-3 pr-6 text-gray-800">{{ $booking->time ?? '-' }}</td>
                     <td class="py-3 pr-6 text-gray-800">Rp {{ number_format($booking->total_price, 0, ',', '.') }}</td>
-                    <td class="py-3">
+                    <td class="py-3 pr-6">
                         @php 
                             $statusColors = [
                                 'confirmed' => 'blue',
@@ -161,6 +164,9 @@
                             $label = $statusLabels[$booking->status] ?? $booking->status;
                         @endphp
                         <span class="px-2.5 py-1 rounded-full text-{{ $color }}-700 bg-{{ $color }}-50">{{ $label }}</span>
+                    </td>
+                    <td class="py-3">
+                        <a href="{{ route('admin.bookings.show', $booking) }}" class="px-3 py-1.5 border rounded-lg text-gray-700 hover:bg-gray-50">Detail</a>
                     </td>
                 </tr>
                 @empty

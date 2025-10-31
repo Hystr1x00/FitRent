@@ -31,23 +31,29 @@
                     <th class="py-3 pr-6">Email</th>
                     <th class="py-3 pr-6">Telepon</th>
                     <th class="py-3 pr-6">Total Booking</th>
-                    <th class="py-3">Status</th>
+                    <th class="py-3 pr-6">Status</th>
+                    <th class="py-3">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($customers as $customer)
                 <tr class="border-b last:border-0">
-                    <td class="py-3 pr-6 text-gray-800">{{ $customer->name }}</td>
+                    <td class="py-3 pr-6 text-gray-800">
+                        <a href="{{ route('admin.customers.show', $customer) }}" class="text-primary-600 hover:text-primary-700 font-medium">{{ $customer->name }}</a>
+                    </td>
                     <td class="py-3 pr-6 text-gray-800">{{ $customer->email }}</td>
                     <td class="py-3 pr-6 text-gray-800">{{ $customer->phone ?? '-' }}</td>
                     <td class="py-3 pr-6 text-gray-800">{{ $customer->bookings_count }}</td>
-                    <td class="py-3">
+                    <td class="py-3 pr-6">
                         @php
                             $hasRecentBooking = $customer->bookings()->where('created_at', '>=', now()->subMonths(3))->exists();
                         @endphp
                         <span class="px-2.5 py-1 rounded-full {{ $hasRecentBooking ? 'text-green-700 bg-green-50' : 'text-gray-700 bg-gray-50' }}">
                             {{ $hasRecentBooking ? 'Aktif' : 'Nonaktif' }}
                         </span>
+                    </td>
+                    <td class="py-3">
+                        <a href="{{ route('admin.customers.show', $customer) }}" class="px-3 py-1.5 border rounded-lg text-gray-700 hover:bg-gray-50">Detail</a>
                     </td>
                 </tr>
                 @empty

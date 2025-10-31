@@ -70,6 +70,7 @@
             <div class="h-64 relative">
                 @if(count($revenuePerDay) > 0)
                     <canvas id="revenueChart"></canvas>
+                    <div id="revenueEmptyStateReports" class="hidden absolute inset-0 flex items-center justify-center text-gray-500 text-sm">Belum ada data pada periode ini.</div>
                 @else
                     <div class="h-full flex items-center justify-center text-gray-500">
                         <div class="text-center">
@@ -110,33 +111,53 @@
         }
     }
 
-    // Revenue per day chart
+    // Revenue per day chart (modern line)
     const revenueCtx = document.getElementById('revenueChart');
     if (revenueCtx) {
         const chartData = {!! json_encode($revenuePerDay) !!};
-        console.log('Revenue Chart Data:', chartData); // Debug
-        
+        const gctx = revenueCtx.getContext('2d');
+        const containerH = (revenueCtx.parentElement && revenueCtx.parentElement.offsetHeight) ? revenueCtx.parentElement.offsetHeight : 256;
+        const gradient = gctx.createLinearGradient(0, 0, 0, containerH);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.25)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        const sumRevenue = chartData.reduce((s, it) => s + (parseFloat(it.revenue) || 0), 0);
+        const hasData = sumRevenue > 0;
+        const emptyEl = document.getElementById('revenueEmptyStateReports');
+        if (emptyEl && !hasData) {
+            emptyEl.classList.remove('hidden');
+        } else {
         new Chart(revenueCtx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: chartData.map(item => item.date),
                 datasets: [{
                     label: 'Pendapatan',
-                    data: chartData.map(item => item.revenue),
-                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    data: chartData.map(item => parseFloat(item.revenue) || 0),
                     borderColor: 'rgb(59, 130, 246)',
-                    borderWidth: 2,
-                    borderRadius: 6
+                    borderWidth: 3,
+                    backgroundColor: gradient,
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: 'rgb(59, 130, 246)',
+                    pointBorderWidth: 2,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#e2e8f0',
+                        bodyColor: '#cbd5e1',
+                        padding: 12,
+                        borderColor: '#1e293b',
+                        borderWidth: 1,
                         callbacks: {
                             label: function(context) {
                                 return 'Pendapatan: ' + formatRupiah(context.parsed.y);
@@ -147,20 +168,17 @@
                 scales: {
                     y: {
                         beginAtZero: true,
+                        grid: { color: 'rgba(148, 163, 184, 0.15)' },
                         ticks: {
-                            callback: function(value) {
-                                return formatRupiah(value);
-                            }
+                            callback: function(value) { return formatRupiah(value); }
                         }
                     },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
+                    x: { grid: { display: false } }
+                },
+                animation: { duration: 900, easing: 'easeOutQuart' }
             }
         });
+        }
     }
 
     // Sport distribution chart

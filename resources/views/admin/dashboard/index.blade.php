@@ -59,8 +59,11 @@
                 </select>
                 </form>
             </div>
-            <div class="h-56 relative">
+            <div class="h-64 relative">
                 <canvas id="revenueTrendChart"></canvas>
+                <div id="revenueEmptyState" class="hidden absolute inset-0 flex items-center justify-center text-sm text-gray-500">
+                    Belum ada data pendapatan pada periode ini.
+                </div>
             </div>
         </div>
         <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
@@ -149,23 +152,36 @@
     const ctx = document.getElementById('revenueTrendChart');
     if (ctx) {
         const chartData = {!! json_encode($revenueTrend) !!};
-        
+
+        const gctx = ctx.getContext('2d');
+        const containerH = (ctx.parentElement && ctx.parentElement.offsetHeight) ? ctx.parentElement.offsetHeight : 256;
+        const gradient = gctx.createLinearGradient(0, 0, 0, containerH);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.25)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        // No custom shadow plugin to avoid double line rendering
+
+        const hasData = chartData.some(item => (Number(item.revenue) || 0) > 0);
+        const emptyEl = document.getElementById('revenueEmptyState');
+        if (!hasData && emptyEl) emptyEl.classList.remove('hidden');
+
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: chartData.map(item => item.label),
                 datasets: [{
                     label: 'Pendapatan',
-                    data: chartData.map(item => item.revenue),
+                    data: chartData.map(item => hasData ? Number(item.revenue) : 1),
                     borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
+                    borderWidth: 3,
+                    backgroundColor: gradient,
+                    tension: 0.35,
                     fill: true,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: 'rgb(59, 130, 246)',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: 'rgb(59, 130, 246)',
+                    pointBorderWidth: 2,
                 }]
             },
             options: {
@@ -180,9 +196,11 @@
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        backgroundColor: '#0f172a',
+                        titleColor: '#e2e8f0',
+                        bodyColor: '#cbd5e1',
                         padding: 12,
-                        borderColor: 'rgba(59, 130, 246, 0.5)',
+                        borderColor: '#1e293b',
                         borderWidth: 1,
                         titleFont: {
                             size: 14,
@@ -198,18 +216,16 @@
                             label: function(context) {
                                 const dataIndex = context.dataIndex;
                                 const revenue = context.parsed.y;
-                                const sports = chartData[dataIndex].sports;
+                const sports = (chartData[dataIndex] && chartData[dataIndex].sports) ? chartData[dataIndex].sports : {};
                                 
                                 const lines = ['Pendapatan: Rp ' + revenue.toLocaleString('id-ID')];
                                 
-                                if (Object.keys(sports).length > 0) {
+                                if (sports && Object.keys(sports).length > 0) {
                                     lines.push(''); // Empty line
                                     lines.push('Olahraga:');
                                     Object.entries(sports).forEach(([sport, data]) => {
                                         lines.push(`• ${sport}: ${data.count}x (Rp ${data.revenue.toLocaleString('id-ID')})`);
                                     });
-                                } else {
-                                    lines.push('Tidak ada transaksi');
                                 }
                                 
                                 return lines;
@@ -220,6 +236,7 @@
                 scales: {
                     y: {
                         beginAtZero: true,
+                        grid: { color: 'rgba(148, 163, 184, 0.15)' },
                         ticks: {
                             callback: function(value) {
                                 if (value >= 1000000) {
@@ -229,14 +246,16 @@
                                 }
                                 return 'Rp ' + value;
                             }
-                        }
+                        },
+                        suggestedMax: hasData ? undefined : 1
                     },
                     x: {
                         grid: {
                             display: false
                         }
                     }
-                }
+                },
+                animation: { duration: 900, easing: 'easeOutQuart' }
             }
         });
     }

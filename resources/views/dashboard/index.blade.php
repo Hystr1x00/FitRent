@@ -45,14 +45,14 @@
                         <p class="text-sm text-gray-600">Lihat booking Anda</p>
                     </a>
 
-                    <a href="{{ route('bookings.index') }}" class="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition text-left">
+                    <a href="{{ route('profile.edit') }}" class="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition text-left">
                         <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
                             <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                             </svg>
                         </div>
-                        <h3 class="font-semibold text-gray-900 mb-1">Statistik</h3>
-                        <p class="text-sm text-gray-600">Aktivitas bermain Anda</p>
+                        <h3 class="font-semibold text-gray-900 mb-1">Profile</h3>
+                        <p class="text-sm text-gray-600">Kelola informasi akun Anda</p>
                     </a>
                 </div>
 

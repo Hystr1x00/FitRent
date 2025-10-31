@@ -124,6 +124,19 @@ class BookingController extends Controller
             
         return back()->with('success', $message);
     }
+
+    public function show(Booking $booking)
+    {
+        $booking->load(['user', 'slot.venue', 'venue']);
+        $userHistory = Booking::with(['slot.venue'])
+            ->where('user_id', $booking->user_id)
+            ->where('id', '!=', $booking->id)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('admin.bookings.show', compact('booking', 'userHistory'));
+    }
 }
 
 

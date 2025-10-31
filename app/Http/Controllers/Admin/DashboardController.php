@@ -37,7 +37,7 @@ class DashboardController extends Controller
 
         // Average rating
         $avgRating = Court::avg('rating') ?? 0;
-        $totalReviews = 0; // Jika ada model Review, bisa dihitung dari sana
+        $totalReviews = 0; 
 
         // Top courts by bookings
         $topCourts = Court::select('courts.*', DB::raw('COUNT(bookings.id) as bookings_count'))
@@ -82,53 +82,40 @@ class DashboardController extends Controller
         switch ($period) {
             case 'daily':
                 // Last 7 days only
+                // Aggregate by day using DB for reliability
+                $start = Carbon::now()->subDays(6)->startOfDay();
+                $end = Carbon::now()->endOfDay();
+                $daily = Booking::selectRaw('DATE(created_at) as d, SUM(total_price) as total')
+                    ->whereBetween('created_at', [$start, $end])
+                    ->groupBy('d')
+                    ->pluck('total', 'd');
                 for ($i = 6; $i >= 0; $i--) {
-                    $date = Carbon::now()->subDays($i);
-                    $revenue = Booking::where('payment_status', 'paid')
-                        ->whereDate('created_at', $date)
-                        ->with('slot.venue')
-                        ->get();
-                    
-                    $sports = $revenue->groupBy(function($booking) {
-                        return $booking->slot->venue->sport ?? 'Unknown';
-                    })->map(function($group) {
-                        return [
-                            'count' => $group->count(),
-                            'revenue' => $group->sum('total_price')
-                        ];
-                    })->toArray();
-                    
+                    $date = Carbon::now()->subDays($i)->toDateString();
+                    $total = (float) ($daily[$date] ?? 0);
                     $trend[] = [
-                        'label' => $date->format('d M'),
-                        'revenue' => $revenue->sum('total_price'),
-                        'sports' => $sports
+                        'label' => Carbon::parse($date)->format('d M'),
+                        'revenue' => $total,
+                        'sports' => []
                     ];
                 }
                 break;
                 
             case 'yearly':
                 // Last 12 months
+                // Aggregate by month for last 12 months
+                $start = Carbon::now()->subMonths(11)->startOfMonth();
+                $monthly = Booking::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as ym, SUM(total_price) as total')
+                    ->where('created_at', '>=', $start)
+                    ->groupBy('ym')
+                    ->pluck('total', 'ym');
                 for ($i = 11; $i >= 0; $i--) {
                     $date = Carbon::now()->subMonths($i);
-                    $revenue = Booking::where('payment_status', 'paid')
-                        ->whereYear('created_at', $date->year)
-                        ->whereMonth('created_at', $date->month)
-                        ->with('slot.venue')
-                        ->get();
-                    
-                    $sports = $revenue->groupBy(function($booking) {
-                        return $booking->slot->venue->sport ?? 'Unknown';
-                    })->map(function($group) {
-                        return [
-                            'count' => $group->count(),
-                            'revenue' => $group->sum('total_price')
-                        ];
-                    })->toArray();
-                    
+                    $key = $date->format('Y-m');
+                    $total = (float) ($monthly[$key] ?? 0);
                     $trend[] = [
                         'label' => $date->format('M Y'),
-                        'revenue' => $revenue->sum('total_price'),
-                        'sports' => $sports
+                        'revenue' => $total,
+                        'sports' => []
                     ];
                 }
                 break;
@@ -136,26 +123,19 @@ class DashboardController extends Controller
             case 'monthly':
             default:
                 // Last 14 days (2 weeks)
+                // Last 14 days aggregate
+                $start = Carbon::now()->subDays(13)->startOfDay();
+                $daily = Booking::selectRaw('DATE(created_at) as d, SUM(total_price) as total')
+                    ->whereBetween('created_at', [$start, Carbon::now()->endOfDay()])
+                    ->groupBy('d')
+                    ->pluck('total', 'd');
                 for ($i = 13; $i >= 0; $i--) {
-                    $date = Carbon::now()->subDays($i);
-                    $revenue = Booking::where('payment_status', 'paid')
-                        ->whereDate('created_at', $date)
-                        ->with('slot.venue')
-                        ->get();
-                    
-                    $sports = $revenue->groupBy(function($booking) {
-                        return $booking->slot->venue->sport ?? 'Unknown';
-                    })->map(function($group) {
-                        return [
-                            'count' => $group->count(),
-                            'revenue' => $group->sum('total_price')
-                        ];
-                    })->toArray();
-                    
+                    $date = Carbon::now()->subDays($i)->toDateString();
+                    $total = (float) ($daily[$date] ?? 0);
                     $trend[] = [
-                        'label' => $date->format('d M'),
-                        'revenue' => $revenue->sum('total_price'),
-                        'sports' => $sports
+                        'label' => Carbon::parse($date)->format('d M'),
+                        'revenue' => $total,
+                        'sports' => []
                     ];
                 }
                 break;
