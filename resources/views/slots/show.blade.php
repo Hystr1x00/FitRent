@@ -134,8 +134,8 @@
                                                         </svg>
                                                     </div>
                                                     <div>
-                                                        <p class="font-medium text-gray-900">{{ $participant->user->name }}</p>
-                                                        <p class="text-sm text-gray-600">{{ $participant->user->email }}</p>
+                                                        <p class="font-medium text-gray-900">{{ $participant->user->name ?? 'Unknown' }}</p>
+                                                        <p class="text-sm text-gray-600">{{ $participant->user->email ?? '-' }}</p>
                                                     </div>
                                                     @if($participant->user_id === $slot->creator_id)
                                                         <span class="ml-auto bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-semibold">Creator</span>

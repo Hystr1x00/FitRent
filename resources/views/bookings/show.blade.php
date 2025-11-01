@@ -141,8 +141,8 @@
                                                         </svg>
                                                     </div>
                                                     <div>
-                                                        <p class="font-medium text-gray-900">{{ $participant->name }}</p>
-                                                        <p class="text-sm text-gray-600">{{ $participant->email }}</p>
+                                                        <p class="font-medium text-gray-900">{{ $participant->user->name ?? 'Unknown' }}</p>
+                                                        <p class="text-sm text-gray-600">{{ $participant->user->email ?? '-' }}</p>
                                                     </div>
                                                 </div>
                                             @endforeach

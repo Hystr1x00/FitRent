@@ -391,7 +391,7 @@ class BookingController extends Controller
             abort(403);
         }
         
-        $booking->load('slot.venue', 'slot.participants', 'slot.creator');
+        $booking->load('slot.venue', 'slot.participants.user', 'slot.creator');
         
         // Check if current user is the slot creator
         $isCreator = $booking->slot && $booking->slot->creator_id === Auth::id();
